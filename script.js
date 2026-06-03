@@ -44,7 +44,6 @@ const newProjectNameInput = document.getElementById('new-project-name-input');
 let appData = JSON.parse(localStorage.getItem('otome_app_data'));
 let currentProject = localStorage.getItem('otome_current_project');
 let currentChapter = localStorage.getItem('otome_current_chapter');
-let currentChapter = localStorage.getItem('otome_current_chapter');
 // ★【追加】ローカルストレージから目標文字数を読み込む（無ければ10000）
 let targetWordCount = localStorage.getItem('otome_target_word_count') || "10000";
 
@@ -321,6 +320,7 @@ function handleScenarioInput() {
 scenarioInput.addEventListener('input', handleScenarioInput);
 scenarioInput.addEventListener('keyup', handleScenarioInput);
 scenarioInput.addEventListener('compositionend', handleScenarioInput); // ★日本語の変換確定時に動く魔法のイベント
+
 // キャラクターボタン機能（ここは以前のものをそのまま流用）
 function renderCharacterButtons() {
     charButtonsArea.innerHTML = "";
