@@ -10,6 +10,12 @@
 
     <h1>乙女ゲーム制作マネージャー</h1>
 
+    <div class="project-selector-wrapper">
+        <label for="current-project-select">📁 進行中の作品：</label>
+        <select id="current-project-select">
+            </select>
+    </div>
+
     <section id="section-task" class="tab-content active">
         <h2>タスク管理</h2>
 
@@ -49,6 +55,13 @@
     <section id="section-scenario" class="tab-content">
         <h2>シナリオ作成</h2>
         
+        <div class="chapter-selector-wrapper">
+            <label for="current-chapter-select">📜 章の選択：</label>
+            <select id="current-chapter-select">
+                </select>
+            <button id="add-chapter-btn">＋ 新しい章</button>
+        </div>
+        
         <div class="character-buttons" id="character-buttons-area"></div>
 
         <textarea id="scenario-input" rows="15" placeholder="ここにシナリオを入力してください..."></textarea>
@@ -61,6 +74,17 @@
 
     <section id="section-setting" class="tab-content">
         <h2>アプリ設定</h2>
+        
+        <div class="setting-group">
+            <label>📁 作品タイトルの管理</label>
+            <p class="setting-desc">新しいゲーム作品を追加したり、不要になった作品を削除できます。</p>
+            <div style="display: flex; gap: 10px; margin-bottom: 10px;">
+                <input type="text" id="new-project-name-input" placeholder="例：恋する魔法学園">
+                <button id="add-project-btn" style="margin-bottom:0; width:auto; white-space:nowrap;">作品を追加</button>
+            </div>
+            <button id="delete-project-btn" class="delete-btn" style="background-color:#e57373; color:white;">選択中の作品を完全に削除する</button>
+        </div>
+
         <div class="setting-group">
             <label for="char-config-input">◆ キャラクターショートカット設定</label>
             <p class="setting-desc">名前をカンマ「,」で区切って入力すると、執筆画面のボタンが更新されます。</p>
