@@ -17,9 +17,6 @@ const deadlineInput = document.getElementById('task-deadline');
 // ★【新機能】締切ソートと文字数メーターの部品登録★
 const alertContainer = document.getElementById('alert-container');
 const sortDeadlineBtn = document.getElementById('sort-deadline-btn');
-const totalWordRatio = document.getElementById('total-word-ratio');
-const totalWordBar = document.getElementById('total-word-bar');
-const targetWordInput = document.getElementById('target-word-input');
 
 const scenarioInput = document.getElementById('scenario-input');
 const charCount = document.getElementById('char-count');
@@ -44,8 +41,6 @@ const newProjectNameInput = document.getElementById('new-project-name-input');
 let appData = JSON.parse(localStorage.getItem('otome_app_data'));
 let currentProject = localStorage.getItem('otome_current_project');
 let currentChapter = localStorage.getItem('otome_current_chapter');
-// ★【追加】ローカルストレージから目標文字数を読み込む（無ければ10000）
-let targetWordCount = localStorage.getItem('otome_target_word_count') || "10000";
 
 // データが空っぽだった場合の初期データ作成
 if (!appData || Object.keys(appData).length === 0) {
@@ -239,8 +234,6 @@ function renderScenario() {
     const text = appData[currentProject].chapters[currentChapter] || "";
     scenarioInput.value = text;
     updateCounts(text);
-    // ★【追加】作品全体の文字数を計算してメーターを更新する
-    updateTotalWordMeter(); 
 }
 
 function updateCounts(text) {
@@ -249,26 +242,6 @@ function updateCounts(text) {
     lineCount.textContent = `現在の行数: ${lines} 行`;
 }
 
-// ★【新設】作品全体の合計文字数メーターを計算する関数
-function updateTotalWordMeter() {
-    const chapters = appData[currentProject].chapters;
-    let totalLength = 0;
-    
-    // 全ての章の文字数をループで足し算する
-    Object.values(chapters).forEach(content => {
-        totalLength += content.length;
-    });
-
-    // 目標文字数を取得（初期値は入力欄から、無ければ10000）
-    const targetLength = parseInt(targetWordInput.value) || 10000;
-    
-    // パーセントの計算（100%を超えないように制御）
-    const percent = Math.min(Math.round((totalLength / targetLength) * 100), 100);
-    
-    // 画面に反映
-    totalWordRatio.textContent = `${totalLength.toLocaleString()} / ${targetLength.toLocaleString()} 文字 (${percent}%)`;
-    totalWordBar.style.width = `${percent}%`;
-}
 
 // ==========================================
 // 4. イベントリスナー（ボタン操作の制御）
@@ -313,7 +286,6 @@ function handleScenarioInput() {
     appData[currentProject].chapters[currentChapter] = scenarioInput.value;
     localStorage.setItem('otome_app_data', JSON.stringify(appData)); 
     updateCounts(scenarioInput.value);
-    updateTotalWordMeter(); 
 }
 
 // 複数の入力イベント（スマホのフリック・予測変換確定・通常入力）をすべてキャッチする
@@ -429,8 +401,6 @@ document.addEventListener('click', () => {
 // 5. アプリ起動時のファースト実行
 // ==========================================
 renderCharacterButtons();
-// ★【追加】保存されていた目標文字数を入力欄に反映
-targetWordInput.value = targetWordCount; 
 saveAndRefreshAll();
 
 // ★【新機能】締切順に並び替えるボタンの処理
@@ -445,12 +415,7 @@ sortDeadlineBtn.addEventListener('click', function() {
         return a.deadline.localeCompare(b.deadline);
     });
     
-    saveAndRefreshAll();
+   
     alert("タスクを締切が近い順に並び替えました！");
 });
 
-// ★【修正】目標文字数が変更されたら、保存してメーターを再計算する
-targetWordInput.addEventListener('input', function() {
-    localStorage.setItem('otome_target_word_count', targetWordInput.value); // 値を保存
-    updateTotalWordMeter();
-});

@@ -476,38 +476,59 @@ select {
     background-color: #f9f9f9;
 }
 
-/* 章切り替えエリア（シナリオ画面） */
-.chapter-selector-wrapper {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    margin-bottom: 15px;
+/* 🔥親の箱が何であろうと、中身（文字・セレクトボックス・ボタン）を強制的に横一列に整列させる */
+#section-scenario label,
+#section-scenario select,
+#section-scenario button,
+#add-chapter-btn {
+    display: inline-block !important;
+    vertical-align: middle !important; /* 縦方向の中心線をミリ単位で一致させる */
+   /* 🛠️ここを変更：左右の余白は0にするが、下側にだけ15pxの隙間を作る */
+    margin: 0 0 15px 0 !important;
 }
 
-.chapter-selector-wrapper label {
+/* 左側の文字（章の選択：） */
+#section-scenario label {
     font-size: 13px;
     font-weight: bold;
     color: #555;
     white-space: nowrap;
+    margin-right: 8px !important;      /* 右側のセレクトボックスとの間に少し隙間を作る */
+    line-height: 38px !important;
 }
 
-.chapter-selector-wrapper select {
-    flex: 1;
-    padding: 8px;
-    border: 1px solid #ccc;
-    border-radius: 6px;
-    font-size: 14px;
+/* 中央のセレクトボックス（幅が広がりすぎるのを防ぐ） */
+#section-scenario select {
+    width: auto !important;            /* 横幅全開になるのを禁止する */
+    min-width: 200px !important;       /* 文字が潰れない最低限の横幅を確保する */
+    max-width: 300px !important;       /* 逆に広がりすぎてボタンを圧迫するのを防ぐ */
+    padding: 8px !important;
+    border: 1px solid #ccc !important;
+    border-radius: 6px !important;
+    font-size: 14px !important;
+    height: 38px !important;           /* 外枠の高さを38pxにカチッと固定 */
+    box-sizing: border-box !important;
+    margin-right: 8px !important;      /* 右側のボタンとの間に少し隙間を作る */
 }
 
-.chapter-selector-wrapper button {
-    background-color: #78909c;
-    color: white;
-    border: none;
-    padding: 8px 12px;
-    border-radius: 6px;
-    font-size: 13px;
-    cursor: pointer;
-    white-space: nowrap;
+/* 右側のボタン（＋ 新しい章） */
+#section-scenario button,
+#add-chapter-btn {
+    background-color: #78909c !important;
+    color: white !important;
+    border: 1px solid transparent !important;
+    padding: 0 12px !important;
+    border-radius: 6px !important;
+    font-size: 13px !important;
+    cursor: pointer !important;
+    white-space: nowrap !important;
+    height: 38px !important;           /* セレクトボックスと完全に同じ高さに固定 */
+    box-sizing: border-box !important;
+    
+    /* ボタンの中の文字も自動でど真ん中に配置する */
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
 }
 
 /* アプリ全体のフォントをスマホ（iOS/Android）の綺麗なシステムフォントに統一 */
