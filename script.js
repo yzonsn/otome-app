@@ -419,3 +419,78 @@ sortDeadlineBtn.addEventListener('click', function() {
     alert("タスクを締切が近い順に並び替えました！");
 });
 
+// 📅 締切日をチェックして、今日＆期限切れのタスクを通知する関数
+function checkDeadlines() {
+    const projectData = appData[currentProject];
+    if (!projectData || !projectData.tasks) return;
+
+    // 今日の日付を取得（YYYY-MM-DD 形式）
+    const todayStr = new Date().toISOString().split('T')[0];
+    const today = new Date(todayStr);
+
+    let todayTasks = [];
+    let overdueTasks = [];
+
+    projectData.tasks.forEach(task => {
+        // 未完了のタスクだけを対象にする
+        if (task.deadline && !task.completed) {
+            const taskDate = new Date(task.deadline);
+            
+            if (task.deadline === todayStr) {
+                // 今日が締切のタスク
+                todayTasks.push(task.title);
+            } else if (taskDate < today) {
+                // 締切が過去（昨日以前）になっているタスク
+                overdueTasks.push(task.title);
+            }
+        }
+    });
+
+    // 1. 期限切れのタスクがあれば最優先で通知
+    if (overdueTasks.length > 0) {
+        sendNotification("【⚠️ 期限切れのタスクがあります】", {
+            body: `「${overdueTasks[0]}」など ${overdueTasks.length} 件のタスクが締切を過ぎています！`,
+            requireInteraction: true // ユーザーが閉じるまで通知を画面に残す設定
+        });
+    }
+
+    // 2. 今日が締切のタスクがあれば通知
+    if (todayTasks.length > 0) {
+        sendNotification("【🔔 本日締切のタスク】", {
+            body: `タスク「${todayTasks[0]}」など ${todayTasks.length} 件が本日締切です。`,
+        });
+    }
+}
+
+// 🚀 アプリ起動時に、上のチェック関数を強制的に実行するスイッチ
+document.addEventListener("DOMContentLoaded", () => {
+    checkDeadlines();
+});
+// 🔔 通知を送信する関数（まだ上にない場合はこれが動く）
+function sendNotification(title, options) {
+    if (!("Notification" in window)) return;
+    
+    if (Notification.permission === "granted") {
+        new Notification(title, options);
+    } else if (Notification.permission !== "denied") {
+        Notification.requestPermission().then(permission => {
+            if (permission === "granted") {
+                new Notification(title, options);
+            }
+        });
+    }
+}
+
+// 🚀 画面が起動した瞬間に、通知の許可を取りつつチェックを走らせる
+document.addEventListener("DOMContentLoaded", () => {
+    // まずブラウザに通知を出していいかお伺いを立てる
+    if ("Notification" in window && Notification.permission !== "granted" && Notification.permission !== "denied") {
+        Notification.requestPermission().then(permission => {
+            if (permission === "granted") {
+                checkDeadlines(); // 許可された瞬間にチェック
+            }
+        });
+    } else {
+        checkDeadlines(); // すでに許可か拒否が決まっているならそのまま実行
+    }
+});
