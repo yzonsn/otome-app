@@ -453,7 +453,7 @@ select {
     padding: 12px 15px;
     border-radius: 8px;
     margin-bottom: 15px;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    box-shadow: 0 1cap 3px rgba(0,0,0,0.05);
     display: flex;
     align-items: center;
     gap: 8px;
