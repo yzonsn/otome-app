@@ -37,12 +37,10 @@ const newProjectNameInput = document.getElementById('new-project-name-input');
 // ==========================================
 // 2. データの初期化・読み込み
 // ==========================================
-// アプリ全体の全データ構造
 let appData = JSON.parse(localStorage.getItem('otome_app_data'));
 let currentProject = localStorage.getItem('otome_current_project');
 let currentChapter = localStorage.getItem('otome_current_chapter');
 
-// データが空っぽだった場合の初期データ作成
 if (!appData || Object.keys(appData).length === 0) {
     appData = {
         "デフォルト作品": {
@@ -58,7 +56,6 @@ if (!appData || Object.keys(appData).length === 0) {
     };
 }
 
-// 選択中の作品や章のつじつま合わせ
 if (!currentProject || !appData[currentProject]) {
     currentProject = Object.keys(appData)[0];
 }
@@ -69,8 +66,6 @@ if (!currentChapter || !appData[currentProject].chapters[currentChapter]) {
 // ==========================================
 // 3. 画面描画（レンダリング）の関数群
 // ==========================================
-
-// 全体のデータをローカルストレージに保存して画面を再描画する
 function saveAndRefreshAll() {
     localStorage.setItem('otome_app_data', JSON.stringify(appData));
     localStorage.setItem('otome_current_project', currentProject);
@@ -82,7 +77,6 @@ function saveAndRefreshAll() {
     renderScenario();
 }
 
-// 作品セレクトボックスの更新
 function renderProjectSelect() {
     projectSelect.innerHTML = "";
     Object.keys(appData).forEach(projName => {
@@ -94,7 +88,6 @@ function renderProjectSelect() {
     });
 }
 
-// 章セレクトボックスの更新
 function renderChapterSelect() {
     chapterSelect.innerHTML = "";
     const chapters = appData[currentProject].chapters;
@@ -107,13 +100,10 @@ function renderChapterSelect() {
     });
 }
 
-// タスク一覧と進捗グラフの描画
 function renderTasks() {
     taskList.innerHTML = "";
-    // ★【追加】ここからアラート消去の初期化
     alertContainer.innerHTML = ""; 
     let hasTodayTask = false;
-    // ★ここまで
 
     const projectData = appData[currentProject];
     const savedTasks = projectData.tasks;
@@ -121,7 +111,6 @@ function renderTasks() {
     const now = new Date();
     const todayString = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
 
-    // ★【追加】ループの前に、今日が締切の未完了タスクがあるかチェックする
     savedTasks.forEach(task => {
         if (!task.completed && task.deadline === todayString) {
             hasTodayTask = true;
@@ -131,20 +120,15 @@ function renderTasks() {
     if (hasTodayTask) {
         alertContainer.innerHTML = `<div class="deadline-alert-box">⚠️ 警告：本日が締切のタスクがあります！</div>`;
     }
-    // ★ここまで
-
-    //（ここから下にあるsavedTasks.forEach(function(task, index) { ... } などの既存コードはそのまま残す）
 
     savedTasks.forEach(function(task, index) {
         const listItem = document.createElement('li');
         
-        // カテゴリーバッジ
         const badgeSpan = document.createElement('span');
         badgeSpan.className = `category-badge badge-${task.category || 'その他'}`;
         badgeSpan.textContent = task.category || 'その他';
         listItem.appendChild(badgeSpan);
 
-        // タスク本文
         const textSpan = document.createElement('span');
         textSpan.style.flex = "1";
         if (task.deadline) {
@@ -159,7 +143,6 @@ function renderTasks() {
         }
         listItem.appendChild(textSpan);
 
-        // 完了ボタン
         const completeButton = document.createElement('button');
         completeButton.textContent = task.completed ? '戻す' : '完了';
         completeButton.style.cssText = `background-color: ${task.completed ? '#b0bec5' : '#81c784'}; color: white; border: none; border-radius: 4px; padding: 6px 12px; font-size: 12px; cursor: pointer; margin-right: 5px;`;
@@ -169,7 +152,6 @@ function renderTasks() {
         });
         listItem.appendChild(completeButton);
 
-        // 3点リーダーメニュー
         const menuTrigger = document.createElement('button');
         menuTrigger.className = 'menu-trigger-btn';
         menuTrigger.innerHTML = '&#8942;';
@@ -178,7 +160,6 @@ function renderTasks() {
         const popover = document.createElement('div');
         popover.className = 'task-menu-popover';
 
-        // 編集
         const editBtn = document.createElement('button');
         editBtn.textContent = '✏ タスクを編集';
         editBtn.addEventListener('click', function() {
@@ -190,7 +171,6 @@ function renderTasks() {
         });
         popover.appendChild(editBtn);
 
-        // 削除
         const deleteBtn = document.createElement('button');
         deleteBtn.textContent = '🗑 タスクを削除';
         deleteBtn.className = 'delete-btn';
@@ -212,7 +192,6 @@ function renderTasks() {
         taskList.appendChild(listItem);
     });
 
-    // グラフ更新
     const categories = ['シナリオ', 'イラスト', 'システム', 'その他'];
     categories.forEach(cat => {
         const catTasks = savedTasks.filter(t => (t.category || 'その他') === cat);
@@ -229,7 +208,6 @@ function renderTasks() {
     });
 }
 
-// シナリオ本文の描画と文字数計算
 function renderScenario() {
     const text = appData[currentProject].chapters[currentChapter] || "";
     scenarioInput.value = text;
@@ -242,12 +220,9 @@ function updateCounts(text) {
     lineCount.textContent = `現在の行数: ${lines} 行`;
 }
 
-
 // ==========================================
 // 4. イベントリスナー（ボタン操作の制御）
 // ==========================================
-
-// タブ切り替え
 tabButtons.forEach(button => {
     button.addEventListener('click', function() {
         tabButtons.forEach(btn => btn.classList.remove('active'));
@@ -258,12 +233,10 @@ tabButtons.forEach(button => {
     });
 });
 
-// ポップアップ（モーダル）の開閉
 openModalBtn.addEventListener('click', () => taskModalOverlay.classList.add('show'));
 closeModalBtn.addEventListener('click', () => taskModalOverlay.classList.remove('show'));
 taskModalOverlay.addEventListener('click', (e) => { if (e.target === taskModalOverlay) taskModalOverlay.classList.remove('show'); });
 
-// タスクの追加
 addTaskBtn.addEventListener('click', function() {
     const text = taskInput.value.trim();
     const category = categorySelect.value;
@@ -281,19 +254,16 @@ addTaskBtn.addEventListener('click', function() {
     saveAndRefreshAll();
 });
 
-// ★【スマホ完全対応】シナリオの入力検知（リアルタイム保存＆メーター更新）
 function handleScenarioInput() {
     appData[currentProject].chapters[currentChapter] = scenarioInput.value;
     localStorage.setItem('otome_app_data', JSON.stringify(appData)); 
     updateCounts(scenarioInput.value);
 }
 
-// 複数の入力イベント（スマホのフリック・予測変換確定・通常入力）をすべてキャッチする
 scenarioInput.addEventListener('input', handleScenarioInput);
 scenarioInput.addEventListener('keyup', handleScenarioInput);
-scenarioInput.addEventListener('compositionend', handleScenarioInput); // ★日本語の変換確定時に動く魔法のイベント
+scenarioInput.addEventListener('compositionend', handleScenarioInput);
 
-// キャラクターボタン機能（ここは以前のものをそのまま流用）
 function renderCharacterButtons() {
     charButtonsArea.innerHTML = "";
     const savedNames = localStorage.getItem('otome_char_names') || "主人公,ルカ,カイル";
@@ -331,30 +301,22 @@ saveCharConfigBtn.addEventListener('click', function() {
     alert("キャラクターショートカットを更新しました！");
 });
 
-// ------------------------------------------
-// ★【新機能】作品・章のイベント操作群★
-// ------------------------------------------
-
-// 作品を切り替えたとき
 projectSelect.addEventListener('change', function() {
     currentProject = projectSelect.value;
-    currentChapter = Object.keys(appData[currentProject].chapters)[0]; // その作品の最初の章にする
+    currentChapter = Object.keys(appData[currentProject].chapters)[0];
     saveAndRefreshAll();
 });
 
-// 章を切り替えたとき
 chapterSelect.addEventListener('change', function() {
     currentChapter = chapterSelect.value;
     saveAndRefreshAll();
 });
 
-// 新しい作品を追加するボタン
 addProjectBtn.addEventListener('click', function() {
     const name = newProjectNameInput.value.trim();
     if (!name) { alert("作品タイトルを入力してください"); return; }
     if (appData[name]) { alert("その作品はすでに存在します"); return; }
     
-    // 新規作品の型を作る
     appData[name] = {
         tasks: [],
         chapters: { "共通プロット": "ここに設定やプロットを書いてください。" }
@@ -367,7 +329,6 @@ addProjectBtn.addEventListener('click', function() {
     saveAndRefreshAll();
 });
 
-// 選択中の作品を完全に削除する
 deleteProjectBtn.addEventListener('click', function() {
     if (Object.keys(appData).length <= 1) { alert("最後の1つは削除できません"); return; }
     
@@ -380,7 +341,6 @@ deleteProjectBtn.addEventListener('click', function() {
     }
 });
 
-// 新しい章を追加するボタン
 addChapterBtn.addEventListener('click', function() {
     const chapName = prompt("新しい章の名前を入力してください（例：第2章、ルカルートなど）");
     if (!chapName || chapName.trim() === "") return;
@@ -392,69 +352,57 @@ addChapterBtn.addEventListener('click', function() {
     alert(`「${chapName}」を作成しました。`);
 });
 
-// 閉じるポップオーバーを画面クリックで隠すおまじない
 document.addEventListener('click', () => {
     document.querySelectorAll('.task-menu-popover').forEach(p => p.classList.remove('show'));
 });
 
-// ==========================================
-// 5. アプリ起動時のファースト実行
-// ==========================================
-renderCharacterButtons();
-saveAndRefreshAll();
-
-// ★【新機能】締切順に並び替えるボタンの処理
 sortDeadlineBtn.addEventListener('click', function() {
     const projectData = appData[currentProject];
-    
     projectData.tasks.sort((a, b) => {
-        // 締切がないものは後ろに回す
         if (!a.deadline) return 1;
         if (!b.deadline) return -1;
-        // 締切が早い順に並び替え
         return a.deadline.localeCompare(b.deadline);
     });
-    
-   
+    saveAndRefreshAll();
     alert("タスクを締切が近い順に並び替えました！");
 });
 
-// 📅 締切日をチェックして、今日＆期限切れのタスクを通知する関数
+// ==========================================
+// 5. 【通知機能】バックグラウンド・起動時処理
+// ==========================================
+
+// 📅 締切日をチェックして通知する
 function checkDeadlines() {
     const projectData = appData[currentProject];
     if (!projectData || !projectData.tasks) return;
 
-    // 今日の日付を取得（YYYY-MM-DD 形式）
-    const todayStr = new Date().toISOString().split('T')[0];
+    const now = new Date();
+    const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
     const today = new Date(todayStr);
 
     let todayTasks = [];
     let overdueTasks = [];
 
     projectData.tasks.forEach(task => {
-        // 未完了のタスクだけを対象にする
+        // 🚨修正箇所：task.titleではなく「task.text」を参照するように直したぞ
         if (task.deadline && !task.completed) {
             const taskDate = new Date(task.deadline);
             
             if (task.deadline === todayStr) {
-                // 今日が締切のタスク
-                todayTasks.push(task.title);
+                todayTasks.push(task.text);
             } else if (taskDate < today) {
-                // 締切が過去（昨日以前）になっているタスク
-                overdueTasks.push(task.title);
+                overdueTasks.push(task.text);
             }
         }
     });
 
-    // 1. 期限切れのタスクがあれば最優先で通知
     if (overdueTasks.length > 0) {
         sendNotification("【⚠️ 期限切れのタスクがあります】", {
             body: `「${overdueTasks[0]}」など ${overdueTasks.length} 件のタスクが締切を過ぎています！`,
-            requireInteraction: true // ユーザーが閉じるまで通知を画面に残す設定
+            requireInteraction: true 
         });
     }
 
-    // 2. 今日が締切のタスクがあれば通知
     if (todayTasks.length > 0) {
         sendNotification("【🔔 本日締切のタスク】", {
             body: `タスク「${todayTasks[0]}」など ${todayTasks.length} 件が本日締切です。`,
@@ -462,11 +410,7 @@ function checkDeadlines() {
     }
 }
 
-// 🚀 アプリ起動時に、上のチェック関数を強制的に実行するスイッチ
-document.addEventListener("DOMContentLoaded", () => {
-    checkDeadlines();
-});
-// 🔔 通知を送信する関数（まだ上にない場合はこれが動く）
+// 🔔 通知を送信する
 function sendNotification(title, options) {
     if (!("Notification" in window)) return;
     
@@ -481,16 +425,22 @@ function sendNotification(title, options) {
     }
 }
 
-// 🚀 画面が起動した瞬間に、通知の許可を取りつつチェックを走らせる
-document.addEventListener("DOMContentLoaded", () => {
-    // まずブラウザに通知を出していいかお伺いを立てる
-    if ("Notification" in window && Notification.permission !== "granted" && Notification.permission !== "denied") {
+// ==========================================
+// 6. アプリ起動時のファースト実行（順番を整理）
+// ==========================================
+// 🚨修正箇所：データを完全に読み込み・描画したあとに、最後に通知を仕掛けるようにした
+renderCharacterButtons();
+saveAndRefreshAll(); 
+
+// 画面が準備できたら、通知の権限を確認しつつチェックを開始
+if ("Notification" in window) {
+    if (Notification.permission === "granted") {
+        checkDeadlines();
+    } else if (Notification.permission !== "denied") {
         Notification.requestPermission().then(permission => {
             if (permission === "granted") {
-                checkDeadlines(); // 許可された瞬間にチェック
+                checkDeadlines();
             }
         });
-    } else {
-        checkDeadlines(); // すでに許可か拒否が決まっているならそのまま実行
     }
-});
+}
