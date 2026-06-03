@@ -44,6 +44,9 @@ const newProjectNameInput = document.getElementById('new-project-name-input');
 let appData = JSON.parse(localStorage.getItem('otome_app_data'));
 let currentProject = localStorage.getItem('otome_current_project');
 let currentChapter = localStorage.getItem('otome_current_chapter');
+let currentChapter = localStorage.getItem('otome_current_chapter');
+// ★【追加】ローカルストレージから目標文字数を読み込む（無ければ10000）
+let targetWordCount = localStorage.getItem('otome_target_word_count') || "10000";
 
 // データが空っぽだった場合の初期データ作成
 if (!appData || Object.keys(appData).length === 0) {
@@ -306,16 +309,18 @@ addTaskBtn.addEventListener('click', function() {
     saveAndRefreshAll();
 });
 
-// シナリオの入力検知（リアルタイム保存）
-scenarioInput.addEventListener('input', function() {
+// ★【スマホ完全対応】シナリオの入力検知（リアルタイム保存＆メーター更新）
+function handleScenarioInput() {
     appData[currentProject].chapters[currentChapter] = scenarioInput.value;
     localStorage.setItem('otome_app_data', JSON.stringify(appData)); 
     updateCounts(scenarioInput.value);
-    
-    // ★【ここに下の1行を追加】入力された瞬間に全体のメーターも再計算させる
     updateTotalWordMeter(); 
-});
+}
 
+// 複数の入力イベント（スマホのフリック・予測変換確定・通常入力）をすべてキャッチする
+scenarioInput.addEventListener('input', handleScenarioInput);
+scenarioInput.addEventListener('keyup', handleScenarioInput);
+scenarioInput.addEventListener('compositionend', handleScenarioInput); // ★日本語の変換確定時に動く魔法のイベント
 // キャラクターボタン機能（ここは以前のものをそのまま流用）
 function renderCharacterButtons() {
     charButtonsArea.innerHTML = "";
@@ -424,6 +429,8 @@ document.addEventListener('click', () => {
 // 5. アプリ起動時のファースト実行
 // ==========================================
 renderCharacterButtons();
+// ★【追加】保存されていた目標文字数を入力欄に反映
+targetWordInput.value = targetWordCount; 
 saveAndRefreshAll();
 
 // ★【新機能】締切順に並び替えるボタンの処理
@@ -442,7 +449,8 @@ sortDeadlineBtn.addEventListener('click', function() {
     alert("タスクを締切が近い順に並び替えました！");
 });
 
-// ★【新機能】目標文字数が変更されたらメーターを再計算する
+// ★【修正】目標文字数が変更されたら、保存してメーターを再計算する
 targetWordInput.addEventListener('input', function() {
+    localStorage.setItem('otome_target_word_count', targetWordInput.value); // 値を保存
     updateTotalWordMeter();
 });
