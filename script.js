@@ -283,7 +283,7 @@ function renderCharacterButtons() {
             const start = scenarioInput.selectionStart;
             const end = scenarioInput.selectionEnd;
             const oldText = scenarioInput.value;
-            const insertText = `【${cleanName}】「」`;
+            const insertText = `${cleanName}`;
             
             scenarioInput.value = oldText.substring(0, start) + insertText + oldText.substring(end);
             scenarioInput.focus();
