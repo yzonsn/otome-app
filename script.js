@@ -1,18 +1,4 @@
-// アプリ起動時に、強制的に通知の許可をユーザーに求める
-if ('Notification' in window) {
-    if (Notification.permission === 'default') {
-        Notification.requestPermission().then(permission => {
-            if (permission === 'granted') {
-                console.log('通知が許可されました。');
-                // 許可してくれた瞬間に、テストを兼ねて1回通知を飛ばしてみる
-                checkDeadlines(); 
-            }
-        });
-    } else if (Notification.permission === 'granted') {
-        // すでに許可されている場合はそのままチェックを実行
-        checkDeadlines();
-    }
-}
+
 // ==========================================
 // 1. 要素の取得（新機能の部品も含む）
 // ==========================================
@@ -77,7 +63,21 @@ if (!currentProject || !appData[currentProject]) {
 if (!currentChapter || !appData[currentProject].chapters[currentChapter]) {
     currentChapter = Object.keys(appData[currentProject].chapters)[0];
 }
-
+// アプリ起動時に、強制的に通知の許可をユーザーに求める
+if ('Notification' in window) {
+    if (Notification.permission === 'default') {
+        Notification.requestPermission().then(permission => {
+            if (permission === 'granted') {
+                console.log('通知が許可されました。');
+                // 許可してくれた瞬間に、テストを兼ねて1回通知を飛ばしてみる
+                checkDeadlines(); 
+            }
+        });
+    } else if (Notification.permission === 'granted') {
+        // すでに許可されている場合はそのままチェックを実行
+        checkDeadlines();
+    }
+}
 // ==========================================
 // 3. 画面描画（レンダリング）の関数群
 // ==========================================
