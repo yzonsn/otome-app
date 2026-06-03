@@ -14,6 +14,13 @@ const taskInput = document.getElementById('task-input');
 const categorySelect = document.getElementById('task-category');
 const deadlineInput = document.getElementById('task-deadline');
 
+// ★【新機能】締切ソートと文字数メーターの部品登録★
+const alertContainer = document.getElementById('alert-container');
+const sortDeadlineBtn = document.getElementById('sort-deadline-btn');
+const totalWordRatio = document.getElementById('total-word-ratio');
+const totalWordBar = document.getElementById('total-word-bar');
+const targetWordInput = document.getElementById('target-word-input');
+
 const scenarioInput = document.getElementById('scenario-input');
 const charCount = document.getElementById('char-count');
 const lineCount = document.getElementById('line-count');
@@ -106,11 +113,30 @@ function renderChapterSelect() {
 // タスク一覧と進捗グラフの描画
 function renderTasks() {
     taskList.innerHTML = "";
+    // ★【追加】ここからアラート消去の初期化
+    alertContainer.innerHTML = ""; 
+    let hasTodayTask = false;
+    // ★ここまで
+
     const projectData = appData[currentProject];
     const savedTasks = projectData.tasks;
     
     const now = new Date();
     const todayString = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+
+    // ★【追加】ループの前に、今日が締切の未完了タスクがあるかチェックする
+    savedTasks.forEach(task => {
+        if (!task.completed && task.deadline === todayString) {
+            hasTodayTask = true;
+        }
+    });
+
+    if (hasTodayTask) {
+        alertContainer.innerHTML = `<div class="deadline-alert-box">⚠️ 警告：本日が締切のタスクがあります！</div>`;
+    }
+    // ★ここまで
+
+    //（ここから下にあるsavedTasks.forEach(function(task, index) { ... } などの既存コードはそのまま残す）
 
     savedTasks.forEach(function(task, index) {
         const listItem = document.createElement('li');
@@ -211,12 +237,35 @@ function renderScenario() {
     const text = appData[currentProject].chapters[currentChapter] || "";
     scenarioInput.value = text;
     updateCounts(text);
+    // ★【追加】作品全体の文字数を計算してメーターを更新する
+    updateTotalWordMeter(); 
 }
 
 function updateCounts(text) {
     charCount.textContent = `現在の文字数: ${text.length} 文字`;
     const lines = text === "" ? 1 : text.split('\n').length;
     lineCount.textContent = `現在の行数: ${lines} 行`;
+}
+
+// ★【新設】作品全体の合計文字数メーターを計算する関数
+function updateTotalWordMeter() {
+    const chapters = appData[currentProject].chapters;
+    let totalLength = 0;
+    
+    // 全ての章の文字数をループで足し算する
+    Object.values(chapters).forEach(content => {
+        totalLength += content.length;
+    });
+
+    // 目標文字数を取得（初期値は入力欄から、無ければ10000）
+    const targetLength = parseInt(targetWordInput.value) || 10000;
+    
+    // パーセントの計算（100%を超えないように制御）
+    const percent = Math.min(Math.round((totalLength / targetLength) * 100), 100);
+    
+    // 画面に反映
+    totalWordRatio.textContent = `${totalLength.toLocaleString()} / ${targetLength.toLocaleString()} 文字 (${percent}%)`;
+    totalWordBar.style.width = `${percent}%`;
 }
 
 // ==========================================
@@ -373,3 +422,24 @@ document.addEventListener('click', () => {
 // ==========================================
 renderCharacterButtons();
 saveAndRefreshAll();
+
+// ★【新機能】締切順に並び替えるボタンの処理
+sortDeadlineBtn.addEventListener('click', function() {
+    const projectData = appData[currentProject];
+    
+    projectData.tasks.sort((a, b) => {
+        // 締切がないものは後ろに回す
+        if (!a.deadline) return 1;
+        if (!b.deadline) return -1;
+        // 締切が早い順に並び替え
+        return a.deadline.localeCompare(b.deadline);
+    });
+    
+    saveAndRefreshAll();
+    alert("タスクを締切が近い順に並び替えました！");
+});
+
+// ★【新機能】目標文字数が変更されたらメーターを再計算する
+targetWordInput.addEventListener('input', function() {
+    updateTotalWordMeter();
+});

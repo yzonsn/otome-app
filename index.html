@@ -19,6 +19,7 @@
 
     <section id="section-task" class="tab-content active">
         <h2>タスク管理</h2>
+        <div id="alert-container"></div>
 
         <div class="progress-container">
             <div class="progress-title">📊 制作進捗ステータス</div>
@@ -48,7 +49,10 @@
             </div>
         </div>
 
-        <button id="open-modal-btn">＋ タスクを追加する</button>
+       <div class="task-action-row" style="display: flex; gap: 10px; margin-bottom: 15px;">
+            <button id="open-modal-btn" style="margin-bottom: 0; flex: 1;">＋ タスクを追加</button>
+            <button id="sort-deadline-btn" style="margin-bottom: 0; background-color: #90a4ae; color: white; border: none; padding: 10px; border-radius: 6px; font-size: 14px; cursor: pointer; white-space: nowrap;">📅 締切順にする</button>
+        </div>
         
         <ul id="task-list"></ul>
     </section>
@@ -62,6 +66,22 @@
                 </select>
             <button id="add-chapter-btn">＋ 新しい章</button>
         </div>          
+        </div> <div class="total-word-container" style="background-color: #fff; padding: 12px; border-radius: 8px; margin-bottom: 15px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+            <div style="display: flex; justify-content: space-between; font-size: 13px; font-weight: bold; color: #555; margin-bottom: 5px;">
+                <span>🏆 作品全体の合計文字数</span>
+                <span id="total-word-ratio">0 / 0 文字</span>
+            </div>
+            <div class="progress-bar-bg" style="height: 10px; background-color: #eee; border-radius: 5px; overflow: hidden; margin-bottom: 8px;">
+                <div id="total-word-bar" style="width: 0%; height: 100%; background-color: #ffb74d; transition: width 0.3s;"></div>
+            </div>
+            <div style="display: flex; align-items: center; gap: 5px;">
+                <span style="font-size: 11px; color: #777; white-space: nowrap;">目標設定:</span>
+                <input type="number" id="target-word-input" value="10000" style="width: 80px; padding: 4px; font-size: 12px; border: 1px solid #ccc; border-radius: 4px;">
+                <span style="font-size: 11px; color: #777;">文字</span>
+            </div>
+        </div>
+
+        <textarea id="scenario-input" rows="15" placeholder="ここにシナリオを入力してください..."></textarea>
 
         <textarea id="scenario-input" rows="15" placeholder="ここにシナリオを入力してください..."></textarea>
 
