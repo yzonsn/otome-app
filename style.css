@@ -509,3 +509,24 @@ select {
     cursor: pointer;
     white-space: nowrap;
 }
+
+/* アプリ全体のフォントをスマホ（iOS/Android）の綺麗なシステムフォントに統一 */
+body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    -webkit-tap-highlight-color: transparent; /* スマホでボタンをタップしたときの青いお肉のような影を消す */
+    user-select: none; /* 執筆エリア以外、画面の文字を間違えて長押し全選択されないようにする */
+}
+
+/* シナリオ入力欄だけは文字を選択・入力できるように例外設定 */
+#scenario-input {
+    user-select: text;
+    font-size: 16px; /* スマホで入力時に画面が勝手にズームインするのを防ぐ魔法のサイズ */
+}
+
+/* 画面下のタブメニューを、少しだけ今風の立体感（影）と角丸にする */
+.tab-menu {
+    border-top: none;
+    box-shadow: 0 -3px 10px rgba(0, 0, 0, 0.08);
+    background: rgba(255, 255, 255, 0.92);
+    backdrop-filter: blur(10px); /* 背景がほんのり透ける、iPhone風の高級感エフェクト */
+}
