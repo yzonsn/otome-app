@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>乙女ゲーム制作マネージャー</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <h1>乙女ゲーム制作マネージャー</h1>
+
+    <section id="section-task" class="tab-content active">
+        <h2>タスク管理</h2>
+
+        <div class="progress-container">
+            <div class="progress-title">📊 制作進捗ステータス</div>
+            
+            <div class="progress-row">
+                <span class="progress-label">🎬 シナリオ</span>
+                <div class="progress-bar-bg"><div id="bar-scenario" class="progress-bar-fill badge-シナリオ"></div></div>
+                <span id="percent-scenario" class="progress-percent">0%</span>
+            </div>
+            
+            <div class="progress-row">
+                <span class="progress-label">🎨 イラスト</span>
+                <div class="progress-bar-bg"><div id="bar-illustration" class="progress-bar-fill badge-イラスト"></div></div>
+                <span id="percent-illustration" class="progress-percent">0%</span>
+            </div>
+            
+            <div class="progress-row">
+                <span class="progress-label">💻 システム</span>
+                <div class="progress-bar-bg"><div id="bar-system" class="progress-bar-fill badge-システム"></div></div>
+                <span id="percent-system" class="progress-percent">0%</span>
+            </div>
+            
+            <div class="progress-row">
+                <span class="progress-label">📁 その他</span>
+                <div class="progress-bar-bg"><div id="bar-other" class="progress-bar-fill badge-その他"></div></div>
+                <span id="percent-other" class="progress-percent">0%</span>
+            </div>
+        </div>
+
+        <button id="open-modal-btn">＋ タスクを追加する</button>
+        
+        <ul id="task-list"></ul>
+    </section>
+
+    <section id="section-scenario" class="tab-content">
+        <h2>シナリオ作成</h2>
+        
+        <div class="character-buttons" id="character-buttons-area"></div>
+
+        <textarea id="scenario-input" rows="15" placeholder="ここにシナリオを入力してください..."></textarea>
+        
+        <div class="status-wrapper">
+            <p id="char-count">現在の文字数: 0 文字</p>
+            <p id="line-count">現在の行数: 1 行</p>
+        </div>
+    </section>
+
+    <section id="section-setting" class="tab-content">
+        <h2>アプリ設定</h2>
+        <div class="setting-group">
+            <label for="char-config-input">◆ キャラクターショートカット設定</label>
+            <p class="setting-desc">名前をカンマ「,」で区切って入力すると、執筆画面のボタンが更新されます。</p>
+            <input type="text" id="char-config-input" placeholder="例：主人公,ルカ,カイル">
+            <button id="save-char-config-btn">設定を保存する</button>
+        </div>
+    </section>
+
+    <div id="task-modal-overlay" class="modal-overlay">
+        <div class="modal-content">
+            <h3>新規タスクの作成</h3>
+            
+            <input type="text" id="task-input" placeholder="例：プロット作成、立ち絵発注...">
+            
+            <select id="task-category">
+                <option value="シナリオ">🎬 シナリオ</option>
+                <option value="イラスト">🎨 イラスト</option>
+                <option value="システム">💻 システム</option>
+                <option value="その他">📁 その他</option>
+            </select>
+            
+            <input type="date" id="task-deadline">
+            
+            <div class="modal-actions">
+                <button id="close-modal-btn">キャンセル</button>
+                <button id="add-task-btn">追加</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="tab-menu">
+        <button id="tab-task" class="active">タスク</button>
+        <button id="tab-scenario">シナリオ</button>
+        <button id="tab-setting">設定</button>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
