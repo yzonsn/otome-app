@@ -309,8 +309,11 @@ addTaskBtn.addEventListener('click', function() {
 // シナリオの入力検知（リアルタイム保存）
 scenarioInput.addEventListener('input', function() {
     appData[currentProject].chapters[currentChapter] = scenarioInput.value;
-    localStorage.setItem('otome_app_data', JSON.stringify(appData)); // メモリ節約のためここだけ直接保存
+    localStorage.setItem('otome_app_data', JSON.stringify(appData)); 
     updateCounts(scenarioInput.value);
+    
+    // ★【ここに下の1行を追加】入力された瞬間に全体のメーターも再計算させる
+    updateTotalWordMeter(); 
 });
 
 // キャラクターボタン機能（ここは以前のものをそのまま流用）
