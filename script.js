@@ -1,5 +1,5 @@
 // ==========================================
-// 1. 要素の取得（新機能の部品も含む）
+// 1. 要素の取得
 // ==========================================
 const tabButtons = document.querySelectorAll('.tab-menu button');
 const tabContents = document.querySelectorAll('.tab-content');
@@ -14,7 +14,6 @@ const taskInput = document.getElementById('task-input');
 const categorySelect = document.getElementById('task-category');
 const deadlineInput = document.getElementById('task-deadline');
 
-// ★【新機能】締切ソートと文字数メーターの部品登録★
 const alertContainer = document.getElementById('alert-container');
 const sortDeadlineBtn = document.getElementById('sort-deadline-btn');
 
@@ -26,7 +25,6 @@ const charButtonsArea = document.getElementById('character-buttons-area');
 const charConfigInput = document.getElementById('char-config-input');
 const saveCharConfigBtn = document.getElementById('save-char-config-btn');
 
-// ★【新機能】作品・章管理の部品★
 const projectSelect = document.getElementById('current-project-select');
 const chapterSelect = document.getElementById('current-chapter-select');
 const addProjectBtn = document.getElementById('add-project-btn');
@@ -62,21 +60,7 @@ if (!currentProject || !appData[currentProject]) {
 if (!currentChapter || !appData[currentProject].chapters[currentChapter]) {
     currentChapter = Object.keys(appData[currentProject].chapters)[0];
 }
-// アプリ起動時に、強制的に通知の許可をユーザーに求める
-if ('Notification' in window) {
-    if (Notification.permission === 'default') {
-        Notification.requestPermission().then(permission => {
-            if (permission === 'granted') {
-                console.log('通知が許可されました。');
-                // 許可してくれた瞬間に、テストを兼ねて1回通知を飛ばしてみる
-                checkDeadlines(); 
-            }
-        });
-    } else if (Notification.permission === 'granted') {
-        // すでに許可されている場合はそのままチェックを実行
-        checkDeadlines();
-    }
-}
+
 // ==========================================
 // 3. 画面描画（レンダリング）の関数群
 // ==========================================
@@ -92,6 +76,7 @@ function saveAndRefreshAll() {
 }
 
 function renderProjectSelect() {
+    if (!projectSelect) return;
     projectSelect.innerHTML = "";
     Object.keys(appData).forEach(projName => {
         const option = document.createElement('option');
@@ -102,7 +87,9 @@ function renderProjectSelect() {
     });
 }
 
+// ⚠️【ここを修正】：chapterSelectが存在しない場合のガードを追加
 function renderChapterSelect() {
+    if (!chapterSelect) return;
     chapterSelect.innerHTML = "";
     const chapters = appData[currentProject].chapters;
     Object.keys(chapters).forEach(chapName => {
@@ -115,8 +102,9 @@ function renderChapterSelect() {
 }
 
 function renderTasks() {
+    if (!taskList) return;
     taskList.innerHTML = "";
-    alertContainer.innerHTML = ""; 
+    if (alertContainer) alertContainer.innerHTML = ""; 
     let hasTodayTask = false;
 
     const projectData = appData[currentProject];
@@ -131,7 +119,7 @@ function renderTasks() {
         }
     });
 
-    if (hasTodayTask) {
+    if (hasTodayTask && alertContainer) {
         alertContainer.innerHTML = `<div class="deadline-alert-box">⚠️ 警告：本日が締切のタスクがあります！</div>`;
     }
 
@@ -223,19 +211,20 @@ function renderTasks() {
 }
 
 function renderScenario() {
+    if (!scenarioInput) return;
     const text = appData[currentProject].chapters[currentChapter] || "";
     scenarioInput.value = text;
     updateCounts(text);
 }
 
 function updateCounts(text) {
-    charCount.textContent = `現在の文字数: ${text.length} 文字`;
+    if (charCount) charCount.textContent = `現在の文字数: ${text.length} 文字`;
     const lines = text === "" ? 1 : text.split('\n').length;
-    lineCount.textContent = `現在の行数: ${lines} 行`;
+    if (lineCount) lineCount.textContent = `現在の行数: ${lines} 行`;
 }
 
 // ==========================================
-// 4. イベントリスナー（ボタン操作の制御）
+// 4. イベントリスナー（安全対策付き）
 // ==========================================
 tabButtons.forEach(button => {
     button.addEventListener('click', function() {
@@ -243,45 +232,54 @@ tabButtons.forEach(button => {
         tabContents.forEach(content => content.classList.remove('active'));
         button.classList.add('active');
         const targetId = button.id.replace('tab-', 'section-');
-        document.getElementById(targetId).classList.add('active');
+        const targetSection = document.getElementById(targetId);
+        if (targetSection) targetSection.classList.add('active');
     });
 });
 
-openModalBtn.addEventListener('click', () => taskModalOverlay.classList.add('show'));
-closeModalBtn.addEventListener('click', () => taskModalOverlay.classList.remove('show'));
-taskModalOverlay.addEventListener('click', (e) => { if (e.target === taskModalOverlay) taskModalOverlay.classList.remove('show'); });
+if (openModalBtn) openModalBtn.addEventListener('click', () => taskModalOverlay && taskModalOverlay.classList.add('show'));
+if (closeModalBtn) closeModalBtn.addEventListener('click', () => taskModalOverlay && taskModalOverlay.classList.remove('show'));
+if (taskModalOverlay) {
+    taskModalOverlay.addEventListener('click', (e) => { if (e.target === taskModalOverlay) taskModalOverlay.classList.remove('show'); });
+}
 
-addTaskBtn.addEventListener('click', function() {
-    const text = taskInput.value.trim();
-    const category = categorySelect.value;
-    const deadline = deadlineInput.value;
+if (addTaskBtn) {
+    addTaskBtn.addEventListener('click', function() {
+        const text = taskInput.value.trim();
+        const category = categorySelect.value;
+        const deadline = deadlineInput.value;
 
-    if (text === "") {
-        alert("タスク名を入力してください");
-        return;
-    }
+        if (text === "") {
+            alert("タスク名を入力してください");
+            return;
+        }
 
-    appData[currentProject].tasks.push({ text: text, category: category, deadline: deadline, completed: false });
-    taskInput.value = "";
-    deadlineInput.value = "";
-    taskModalOverlay.classList.remove('show');
-    saveAndRefreshAll();
-});
+        appData[currentProject].tasks.push({ text: text, category: category, deadline: deadline, completed: false });
+        taskInput.value = "";
+        deadlineInput.value = "";
+        taskModalOverlay.classList.remove('show');
+        saveAndRefreshAll();
+    });
+}
 
 function handleScenarioInput() {
+    if (!scenarioInput) return;
     appData[currentProject].chapters[currentChapter] = scenarioInput.value;
     localStorage.setItem('otome_app_data', JSON.stringify(appData)); 
     updateCounts(scenarioInput.value);
 }
 
-scenarioInput.addEventListener('input', handleScenarioInput);
-scenarioInput.addEventListener('keyup', handleScenarioInput);
-scenarioInput.addEventListener('compositionend', handleScenarioInput);
+if (scenarioInput) {
+    scenarioInput.addEventListener('input', handleScenarioInput);
+    scenarioInput.addEventListener('keyup', handleScenarioInput);
+    scenarioInput.addEventListener('compositionend', handleScenarioInput);
+}
 
 function renderCharacterButtons() {
+    if (!charButtonsArea) return;
     charButtonsArea.innerHTML = "";
     const savedNames = localStorage.getItem('otome_char_names') || "主人公,ルカ,カイル";
-    charConfigInput.value = savedNames;
+    if (charConfigInput) charConfigInput.value = savedNames;
     
     if(savedNames.trim() === "") return;
     
@@ -293,6 +291,7 @@ function renderCharacterButtons() {
         const btn = document.createElement('button');
         btn.textContent = cleanName;
         btn.addEventListener('click', function() {
+            if (!scenarioInput) return;
             const start = scenarioInput.selectionStart;
             const end = scenarioInput.selectionEnd;
             const oldText = scenarioInput.value;
@@ -300,7 +299,7 @@ function renderCharacterButtons() {
             
             scenarioInput.value = oldText.substring(0, start) + insertText + oldText.substring(end);
             scenarioInput.focus();
-            scenarioInput.selectionStart = scenarioInput.selectionEnd = start + cleanName.length + 4;
+            scenarioInput.selectionStart = scenarioInput.selectionEnd = start + cleanName.length;
             
             appData[currentProject].chapters[currentChapter] = scenarioInput.value;
             saveAndRefreshAll();
@@ -309,83 +308,98 @@ function renderCharacterButtons() {
     });
 }
 
-saveCharConfigBtn.addEventListener('click', function() {
-    localStorage.setItem('otome_char_names', charConfigInput.value);
-    renderCharacterButtons();
-    alert("キャラクターショートカットを更新しました！");
-});
+if (saveCharConfigBtn) {
+    saveCharConfigBtn.addEventListener('click', function() {
+        if (charConfigInput) {
+            localStorage.setItem('otome_char_names', charConfigInput.value);
+            renderCharacterButtons();
+            alert("キャラクターショートカットを更新しました！");
+        }
+    });
+}
 
-projectSelect.addEventListener('change', function() {
-    currentProject = projectSelect.value;
-    currentChapter = Object.keys(appData[currentProject].chapters)[0];
-    saveAndRefreshAll();
-});
-
-chapterSelect.addEventListener('change', function() {
-    currentChapter = chapterSelect.value;
-    saveAndRefreshAll();
-});
-
-addProjectBtn.addEventListener('click', function() {
-    const name = newProjectNameInput.value.trim();
-    if (!name) { alert("作品タイトルを入力してください"); return; }
-    if (appData[name]) { alert("その作品はすでに存在します"); return; }
-    
-    appData[name] = {
-        tasks: [],
-        chapters: { "共通プロット": "ここに設定やプロットを書いてください。" }
-    };
-    
-    currentProject = name;
-    currentChapter = "共通プロット";
-    newProjectNameInput.value = "";
-    alert(`作品『${name}』を新設しました！`);
-    saveAndRefreshAll();
-});
-
-deleteProjectBtn.addEventListener('click', function() {
-    if (Object.keys(appData).length <= 1) { alert("最後の1つは削除できません"); return; }
-    
-    if (confirm(`本当に作品『${currentProject}』のデータをタスク・シナリオ含めてすべて【完全に削除】しますか？`)) {
-        delete appData[currentProject];
-        currentProject = Object.keys(appData)[0];
+if (projectSelect) {
+    projectSelect.addEventListener('change', function() {
+        currentProject = projectSelect.value;
         currentChapter = Object.keys(appData[currentProject].chapters)[0];
         saveAndRefreshAll();
-        alert("作品を削除しました。");
-    }
-});
+    });
+}
 
-addChapterBtn.addEventListener('click', function() {
-    const chapName = prompt("新しい章の名前を入力してください（例：第2章、ルカルートなど）");
-    if (!chapName || chapName.trim() === "") return;
-    if (appData[currentProject].chapters[chapName]) { alert("その章はすでに存在します"); return; }
-    
-    appData[currentProject].chapters[chapName] = `${chapName}の本文をここに…`;
-    currentChapter = chapName;
-    saveAndRefreshAll();
-    alert(`「${chapName}」を作成しました。`);
-});
+if (chapterSelect) {
+    chapterSelect.addEventListener('change', function() {
+        currentChapter = chapterSelect.value;
+        saveAndRefreshAll();
+    });
+}
+
+if (addProjectBtn) {
+    addProjectBtn.addEventListener('click', function() {
+        if (!newProjectNameInput) return;
+        const name = newProjectNameInput.value.trim();
+        if (!name) { alert("作品タイトルを入力してください"); return; }
+        if (appData[name]) { alert("その作品はすでに存在します"); return; }
+        
+        appData[name] = {
+            tasks: [],
+            chapters: { "共通プロット": "ここに設定やプロットを書いてください。" }
+        };
+        
+        currentProject = name;
+        currentChapter = "共通プロット";
+        newProjectNameInput.value = "";
+        alert(`作品『${name}』を新設しました！`);
+        saveAndRefreshAll();
+    });
+}
+
+if (deleteProjectBtn) {
+    deleteProjectBtn.addEventListener('click', function() {
+        if (Object.keys(appData).length <= 1) { alert("最後の1つは削除できません"); return; }
+        
+        if (confirm(`本当に作品『${currentProject}』のデータをタスク・シナリオ含めてすべて【完全に削除】しますか？`)) {
+            delete appData[currentProject];
+            currentProject = Object.keys(appData)[0];
+            currentChapter = Object.keys(appData[currentProject].chapters)[0];
+            saveAndRefreshAll();
+            alert("作品を削除しました。");
+        }
+    });
+}
+
+if (addChapterBtn) {
+    addChapterBtn.addEventListener('click', function() {
+        const chapName = prompt("新しい章の名前を入力してください（例：第2章、ルカルートなど）");
+        if (!chapName || chapName.trim() === "") return;
+        if (appData[currentProject].chapters[chapName]) { alert("その章はすでに存在します"); return; }
+        
+        appData[currentProject].chapters[chapName] = `${chapName}の本文をここに…`;
+        currentChapter = chapName;
+        saveAndRefreshAll();
+        alert(`「${chapName}」を作成しました。`);
+    });
+}
 
 document.addEventListener('click', () => {
     document.querySelectorAll('.task-menu-popover').forEach(p => p.classList.remove('show'));
 });
 
-sortDeadlineBtn.addEventListener('click', function() {
-    const projectData = appData[currentProject];
-    projectData.tasks.sort((a, b) => {
-        if (!a.deadline) return 1;
-        if (!b.deadline) return -1;
-        return a.deadline.localeCompare(b.deadline);
+if (sortDeadlineBtn) {
+    sortDeadlineBtn.addEventListener('click', function() {
+        const projectData = appData[currentProject];
+        projectData.tasks.sort((a, b) => {
+            if (!a.deadline) return 1;
+            if (!b.deadline) return -1;
+            return a.deadline.localeCompare(b.deadline);
+        });
+        saveAndRefreshAll();
+        alert("タスクを締切が近い順に並び替えました！");
     });
-    saveAndRefreshAll();
-    alert("タスクを締切が近い順に並び替えました！");
-});
+}
 
 // ==========================================
-// 5. 【通知機能】バックグラウンド・起動時処理
+// 5. 【通知機能】安全に動作する判定ロジック
 // ==========================================
-
-// 📅 締切日をチェックして通知する
 function checkDeadlines() {
     const projectData = appData[currentProject];
     if (!projectData || !projectData.tasks) return;
@@ -398,7 +412,6 @@ function checkDeadlines() {
     let overdueTasks = [];
 
     projectData.tasks.forEach(task => {
-        // 🚨修正箇所：task.titleではなく「task.text」を参照するように直したぞ
         if (task.deadline && !task.completed) {
             const taskDate = new Date(task.deadline);
             
@@ -424,25 +437,29 @@ function checkDeadlines() {
     }
 }
 
-// 🔔 通知を送信する
 function sendNotification(title, options) {
     if (!("Notification" in window)) return;
-    
     if (Notification.permission === "granted") {
         new Notification(title, options);
-    } else if (Notification.permission !== "denied") {
-        Notification.requestPermission().then(permission => {
-            if (permission === "granted") {
-                new Notification(title, options);
-            }
-        });
     }
 }
 
 // ==========================================
-// 6. アプリ起動時のファースト実行（順番を整理）
+// 6. 起動時の安全な処理フロー
 // ==========================================
-// 🚨修正箇所：データを完全に読み込み・描画したあとに、最後に通知を仕掛けるようにした
+// 🚨【大修正】: まず最優先でデータを読み込んで画面を描画する（これで真っ白を防止）
 renderCharacterButtons();
 saveAndRefreshAll(); 
 
+// 画面がしっかり出た後、安全に通知の許可を求めるおねだりを開始
+if ('Notification' in window) {
+    if (Notification.permission === 'default') {
+        Notification.requestPermission().then(permission => {
+            if (permission === 'granted') {
+                checkDeadlines(); 
+            }
+        });
+    } else if (Notification.permission === 'granted') {
+        checkDeadlines();
+    }
+}
