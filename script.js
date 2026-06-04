@@ -469,3 +469,8 @@ if ('serviceWorker' in navigator) {
     .then(reg => console.log('サービスワーカーが登録されました。', reg))
     .catch(err => console.error('サービスワーカーの登録に失敗しました。', err));
 }
+// 今の通知の許可状態を、画面の一番上に無理やり文字で表示するテストコード
+const testDiv = document.createElement('div');
+testDiv.style.cssText = "background: #fff; color: #000; padding: 10px; text-align: center; font-weight: bold; border-bottom: 2px solid #ccc;";
+testDiv.textContent = "今の通知許可ステータス: " + (('Notification' in window) ? Notification.permission : "非対応");
+document.body.insertBefore(testDiv, document.body.firstChild);
