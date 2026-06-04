@@ -1,4 +1,3 @@
-
 // ==========================================
 // 1. 要素の取得（新機能の部品も含む）
 // ==========================================
@@ -447,15 +446,3 @@ function sendNotification(title, options) {
 renderCharacterButtons();
 saveAndRefreshAll(); 
 
-// 画面が準備できたら、通知の権限を確認しつつチェックを開始
-if ("Notification" in window) {
-    if (Notification.permission === "granted") {
-        checkDeadlines();
-    } else if (Notification.permission !== "denied") {
-        Notification.requestPermission().then(permission => {
-            if (permission === "granted") {
-                checkDeadlines();
-            }
-        });
-    }
-}
