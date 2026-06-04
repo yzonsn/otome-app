@@ -494,3 +494,105 @@ if ('Notification' in window) {
     }
 }
 
+// ==========================================
+// 7. 【設定タブ用】章の編集・削除イベント（改良版）
+// ==========================================
+function renderChapterEditControls() {
+    // 🚨 毎回最新の状態で「作品削除ボタン」を取得し直す
+    const targetBtn = document.getElementById('delete-project-btn') || document.querySelector('button[id*="delete"]');
+    
+    if (!targetBtn) {
+        // まだHTML要素が見つからない場合は、0.1秒後に再挑戦する（安全対策）
+        setTimeout(renderChapterEditControls, 100);
+        return;
+    }
+
+    let editArea = document.getElementById('chapter-edit-actions-area');
+    if (!editArea) {
+        editArea = document.createElement('div');
+        editArea.id = 'chapter-edit-actions-area';
+        editArea.style.cssText = "display: flex; flex-direction: column; gap: 10px; margin-top: 15px; padding-top: 15px; border-top: 1px dashed #ccc; width: 100%;";
+        
+        // 作品削除ボタンのすぐ後ろ（下）に挿入
+        targetBtn.parentNode.insertBefore(editArea, targetBtn.nextSibling);
+    }
+
+    editArea.innerHTML = ""; // 毎回クリア
+
+    // 現在選択されている章の名前を表示するラベル
+    const label = document.createElement('div');
+    label.style.cssText = "font-size: 13px; color: #555; font-weight: bold; margin-bottom: 2px; text-align: left;";
+    label.textContent = `◆ 章の管理（選択中: ${currentChapter}）`;
+    editArea.appendChild(label);
+
+    // ✏️ 章の名前を変更するボタン
+    const editBtn = document.createElement('button');
+    editBtn.textContent = `✏️ 『${currentChapter}』の名前を変更`;
+    editBtn.style.cssText = "background-color: #ffb74d; color: white; border: none; border-radius: 4px; padding: 10px; font-size: 14px; cursor: pointer; font-weight: bold; text-align: center; width: 100%;";
+    editBtn.addEventListener('click', function(e) {
+        e.stopPropagation();
+        if (currentChapter === "共通プロット") {
+            alert("「共通プロット」の名前は変更できません。");
+            return;
+        }
+
+        const newChapName = prompt(`『${currentChapter}』の新しい名前を入力してください`, currentChapter);
+        if (!newChapName || newChapName.trim() === "") return;
+        const cleanedName = newChapName.trim();
+
+        if (appData[currentProject].chapters[cleanedName]) {
+            alert("その章名はすでに存在します。");
+            return;
+        }
+
+        const savedText = appData[currentProject].chapters[currentChapter];
+        appData[currentProject].chapters[cleanedName] = savedText;
+        delete appData[currentProject].chapters[currentChapter];
+
+        currentChapter = cleanedName; 
+        alert(`章の名前を『${cleanedName}』に変更しました。`);
+        saveAndRefreshAll();
+    });
+    editArea.appendChild(editBtn);
+
+    // 🗑️ 章を削除するボタン
+    const deleteBtn = document.createElement('button');
+    deleteBtn.textContent = `🗑️ 『${currentChapter}』を削除する`;
+    deleteBtn.style.cssText = "background-color: #e57373; color: white; border: none; border-radius: 4px; padding: 10px; font-size: 14px; cursor: pointer; font-weight: bold; text-align: center; width: 100%; margin-top: 2px;";
+    deleteBtn.addEventListener('click', function(e) {
+        e.stopPropagation();
+        if (currentChapter === "共通プロット") {
+            alert("「共通プロット」は削除できません。");
+            return;
+        }
+
+        if (confirm(`本当に『${currentChapter}』を【本文ごと完全に削除】しますか？\nこの操作は取り消せません。`)) {
+            delete appData[currentProject].chapters[currentChapter];
+            currentChapter = Object.keys(appData[currentProject].chapters)[0];
+            alert("章を削除しました。");
+            saveAndRefreshAll();
+        }
+    });
+    editArea.appendChild(deleteBtn);
+}
+
+// 🚨 既存の連動処理を上書きして、確実にボタンが更新されるようにする
+if (typeof saveAndRefreshAll === 'function') {
+    const originalSaveAndRefreshAll = saveAndRefreshAll;
+    saveAndRefreshAll = function() {
+        originalSaveAndRefreshAll();
+        renderChapterEditControls();
+    };
+}
+
+// 🚨 タブが切り替わった（設定タブが開かれた）瞬間にも再描画を走らせる
+if (tabButtons) {
+    tabButtons.forEach(button => {
+        button.addEventListener('click', () => {
+            renderChapterEditControls();
+        });
+    });
+}
+
+// 初回実行
+renderChapterEditControls();
