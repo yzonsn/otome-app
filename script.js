@@ -105,99 +105,129 @@ function renderTasks() {
     if (!taskList) return;
     taskList.innerHTML = "";
     if (alertContainer) alertContainer.innerHTML = ""; 
-    let hasTodayTask = false;
-
+    
     const projectData = appData[currentProject];
     const savedTasks = projectData.tasks;
     
     const now = new Date();
     const todayString = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
 
+    // 1. まず、画面全体の「本日締切・期限切れ」の警告チェックを走らせる
+    let hasAlertTask = false;
     savedTasks.forEach(task => {
-        if (!task.completed && task.deadline === todayString) {
-            hasTodayTask = true;
+        if (!task.completed && task.deadline) {
+            if (task.deadline <= todayString) {
+                hasAlertTask = true;
+            }
         }
     });
 
-    if (hasTodayTask && alertContainer) {
-        alertContainer.innerHTML = `<div class="deadline-alert-box">⚠️ 警告：本日が締切のタスクがあります！</div>`;
+    if (hasAlertTask && alertContainer) {
+        alertContainer.innerHTML = `<div class="deadline-alert-box">⚠️ 警告：本日締切、または期限切れのタスクがあります！</div>`;
     }
 
-    savedTasks.forEach(function(task, index) {
-        const listItem = document.createElement('li');
-        
-        const badgeSpan = document.createElement('span');
-        badgeSpan.className = `category-badge badge-${task.category || 'その他'}`;
-        badgeSpan.textContent = task.category || 'その他';
-        listItem.appendChild(badgeSpan);
+    // 2. 【ここがポイント】：タスクを種類（カテゴリ）ごとにグループ化する器を作る
+    const categories = ['シナリオ', 'イラスト', 'システム', 'その他'];
+    const groupedTasks = { 'シナリオ': [], 'イラスト': [], 'システム': [], 'その他': [] };
 
-        const textSpan = document.createElement('span');
-        textSpan.style.flex = "1";
-        if (task.deadline) {
-            textSpan.textContent = `${task.text} (締切: ${task.deadline})`;
-            if (!task.completed && task.deadline <= todayString) listItem.classList.add('overdue');
-        } else {
-            textSpan.textContent = task.text;
-        }
-        if (task.completed) {
-            textSpan.style.textDecoration = 'line-through';
-            listItem.classList.remove('overdue');
-        }
-        listItem.appendChild(textSpan);
-
-        const completeButton = document.createElement('button');
-        completeButton.textContent = task.completed ? '戻す' : '完了';
-        completeButton.style.cssText = `background-color: ${task.completed ? '#b0bec5' : '#81c784'}; color: white; border: none; border-radius: 4px; padding: 6px 12px; font-size: 12px; cursor: pointer; margin-right: 5px;`;
-        completeButton.addEventListener('click', function(e) {
-            e.stopPropagation(); // ポップオーバーが閉じないように念のため
-            task.completed = !task.completed; // 状態を反転
-            
-            // データをしっかり保存して画面を更新した「後」に、一呼吸置いて通知をチェックする
-            saveAndRefreshAll();
-        });
-        listItem.appendChild(completeButton);
-
-        const menuTrigger = document.createElement('button');
-        menuTrigger.className = 'menu-trigger-btn';
-        menuTrigger.innerHTML = '&#8942;';
-        listItem.appendChild(menuTrigger);
-
-        const popover = document.createElement('div');
-        popover.className = 'task-menu-popover';
-
-        const editBtn = document.createElement('button');
-        editBtn.textContent = '✏ タスクを編集';
-        editBtn.addEventListener('click', function() {
-            const newText = prompt("タスク内容を編集してください", task.text);
-            if (newText && newText.trim() !== "") {
-                task.text = newText;
-                saveAndRefreshAll();
-            }
-        });
-        popover.appendChild(editBtn);
-
-        const deleteBtn = document.createElement('button');
-        deleteBtn.textContent = '🗑 タスクを削除';
-        deleteBtn.className = 'delete-btn';
-        deleteBtn.addEventListener('click', function() {
-            if (confirm(`「${task.text}」を削除しますか？`)) {
-                savedTasks.splice(index, 1);
-                saveAndRefreshAll();
-            }
-        });
-        popover.appendChild(deleteBtn);
-        listItem.appendChild(popover);
-
-        menuTrigger.addEventListener('click', function(e) {
-            e.stopPropagation();
-            document.querySelectorAll('.task-menu-popover').forEach(p => { if (p !== popover) p.classList.remove('show'); });
-            popover.classList.toggle('show');
-        });
-
-        taskList.appendChild(listItem);
+    // すべてのタスクをそれぞれのカテゴリの器に仕分ける
+    savedTasks.forEach((task, index) => {
+        const cat = task.category || 'その他';
+        // 元の配列のインデックス（削除や完了で使う）を一緒に記憶しておく
+        groupedTasks[cat].push({ data: task, originalIndex: index });
     });
 
-    const categories = ['シナリオ', 'イラスト', 'システム', 'その他'];
+    // 3. カテゴリごとに画面に描画していく
+    categories.forEach(cat => {
+        const tasksInCat = groupedTasks[cat];
+        
+        // そのカテゴリにタスクが1つでもある場合だけ、カテゴリの見出しを作る
+        if (tasksInCat.length > 0) {
+            const categoryHeader = document.createElement('div');
+            categoryHeader.className = `task-category-group-header cat-${cat}`;
+            categoryHeader.style.cssText = "font-weight: bold; margin-top: 15px; margin-bottom: 8px; padding-left: 5px; border-left: 4px solid var(--primary-color, #78909c); color: #37474f;";
+            categoryHeader.textContent = `■ ${cat}`;
+            taskList.appendChild(categoryHeader);
+
+            // そのカテゴリに属するタスクを順番に生成
+            tasksInCat.forEach(item => {
+                const task = item.data;
+                const index = item.originalIndex; // 元の配列の正しい位置
+
+                const listItem = document.createElement('li');
+                
+                const badgeSpan = document.createElement('span');
+                badgeSpan.className = `category-badge badge-${task.category || 'その他'}`;
+                badgeSpan.textContent = task.category || 'その他';
+                listItem.appendChild(badgeSpan);
+
+                const textSpan = document.createElement('span');
+                textSpan.style.flex = "1";
+                if (task.deadline) {
+                    textSpan.textContent = `${task.text} (締切: ${task.deadline})`;
+                    if (!task.completed && task.deadline <= todayString) listItem.classList.add('overdue');
+                } else {
+                    textSpan.textContent = task.text;
+                }
+                if (task.completed) {
+                    textSpan.style.textDecoration = 'line-through';
+                    listItem.classList.remove('overdue');
+                }
+                listItem.appendChild(textSpan);
+
+                const completeButton = document.createElement('button');
+                completeButton.textContent = task.completed ? '戻す' : '完了';
+                completeButton.style.cssText = `background-color: ${task.completed ? '#b0bec5' : '#81c784'}; color: white; border: none; border-radius: 4px; padding: 6px 12px; font-size: 12px; cursor: pointer; margin-right: 5px;`;
+                completeButton.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    task.completed = !task.completed;
+                    saveAndRefreshAll();
+                });
+                listItem.appendChild(completeButton);
+
+                const menuTrigger = document.createElement('button');
+                menuTrigger.className = 'menu-trigger-btn';
+                menuTrigger.innerHTML = '&#8942;';
+                listItem.appendChild(menuTrigger);
+
+                const popover = document.createElement('div');
+                popover.className = 'task-menu-popover';
+
+                const editBtn = document.createElement('button');
+                editBtn.textContent = '✏ タスクを編集';
+                editBtn.addEventListener('click', function() {
+                    const newText = prompt("タスク内容を編集してください", task.text);
+                    if (newText && newText.trim() !== "") {
+                        task.text = newText;
+                        saveAndRefreshAll();
+                    }
+                });
+                popover.appendChild(editBtn);
+
+                const deleteBtn = document.createElement('button');
+                deleteBtn.textContent = '🗑 タスクを削除';
+                deleteBtn.className = 'delete-btn';
+                deleteBtn.addEventListener('click', function() {
+                    if (confirm(`「${task.text}」を削除しますか？`)) {
+                        savedTasks.splice(index, 1); // 正しいインデックスで削除
+                        saveAndRefreshAll();
+                    }
+                });
+                popover.appendChild(deleteBtn);
+                listItem.appendChild(popover);
+
+                menuTrigger.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    document.querySelectorAll('.task-menu-popover').forEach(p => { if (p !== popover) p.classList.remove('show'); });
+                    popover.classList.toggle('show');
+                });
+
+                taskList.appendChild(listItem);
+            });
+        }
+    });
+
+    // 4. 進捗バー（パーセンテージ）の更新処理（現状維持）
     categories.forEach(cat => {
         const catTasks = savedTasks.filter(t => (t.category || 'その他') === cat);
         const total = catTasks.length;
