@@ -148,9 +148,15 @@ function renderTasks() {
         const completeButton = document.createElement('button');
         completeButton.textContent = task.completed ? '戻す' : '完了';
         completeButton.style.cssText = `background-color: ${task.completed ? '#b0bec5' : '#81c784'}; color: white; border: none; border-radius: 4px; padding: 6px 12px; font-size: 12px; cursor: pointer; margin-right: 5px;`;
-        completeButton.addEventListener('click', function() {
-            task.completed = !task.completed;
+        completeButton.addEventListener('click', function(e) {
+            e.stopPropagation(); // ポップオーバーが閉じないように念のため
+            task.completed = !task.completed; // 状態を反転
+            
+            // データをしっかり保存して画面を更新した「後」に、一呼吸置いて通知をチェックする
             saveAndRefreshAll();
+            setTimeout(() => {
+                checkDeadlines();
+            }, 100); 
         });
         listItem.appendChild(completeButton);
 
@@ -411,8 +417,10 @@ function checkDeadlines() {
     let todayTasks = [];
     let overdueTasks = [];
 
+    // 🚨 状態が確実に保存された後のタスク一覧をチェックする
     projectData.tasks.forEach(task => {
-        if (task.deadline && !task.completed) {
+        // 【修正】：確実に「現在完了していない（completed が false）」ものだけを対象にする
+        if (task.deadline && task.completed === false) {
             const taskDate = new Date(task.deadline);
             
             if (task.deadline === todayStr) {
@@ -423,16 +431,18 @@ function checkDeadlines() {
         }
     });
 
+    // 期限切れがあれば通知
     if (overdueTasks.length > 0) {
         sendNotification("【⚠️ 期限切れのタスクがあります】", {
-            body: `「${overdueTasks[0]}」など ${overdueTasks.length} 件のタスクが締切を過ぎています！`,
+            body: `「${overdueTasks[0]}」など ${overdueTasks.length} 件が締切を過ぎています！`,
             requireInteraction: true 
         });
     }
 
+    // 本日締切があれば通知
     if (todayTasks.length > 0) {
         sendNotification("【🔔 本日締切のタスク】", {
-            body: `タスク「${todayTasks[0]}」など ${todayTasks.length} 件が本日締切です。`,
+            body: `「${todayTasks[0]}」が本日締切です。頑張りましょう！`,
         });
     }
 }
