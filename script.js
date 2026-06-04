@@ -525,6 +525,30 @@ function renderChapterEditControls() {
     label.textContent = `◆ 章の管理（選択中: ${currentChapter}）`;
     editArea.appendChild(label);
 
+    // 📋 【新機能】全文コピーボタン
+    const copyBtn = document.createElement('button');
+    copyBtn.textContent = `📋 『${currentChapter}』の本文をコピー`;
+    copyBtn.style.cssText = "background-color: #4db6ac; color: white; border: none; border-radius: 4px; padding: 10px; font-size: 14px; cursor: pointer; font-weight: bold; text-align: center; width: 100%; margin-bottom: 5px;";
+    copyBtn.addEventListener('click', function(e) {
+        e.stopPropagation();
+        
+        // 現在の章のテキストを取得
+        const textToCopy = appData[currentProject].chapters[currentChapter] || "";
+        
+        if (textToCopy.trim() === "") {
+            alert("コピーする本文がありません。");
+            return;
+        }
+
+        // クリップボードにコピーする魔法の処理
+        navigator.clipboard.writeText(textToCopy).then(() => {
+            alert(`『${currentChapter}』の本文をクリップボードにコピーしました！`);
+        }).catch(err => {
+            alert("コピーに失敗しました。もう一度お試しください。");
+        });
+    });
+    editArea.appendChild(copyBtn);
+
     // ✏️ 章の名前を変更するボタン
     const editBtn = document.createElement('button');
     editBtn.textContent = `✏️ 『${currentChapter}』の名前を変更`;
