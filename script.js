@@ -463,3 +463,9 @@ if ('Notification' in window) {
         checkDeadlines();
     }
 }
+// 一番下にそのまま貼り付けてくれ
+if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('./sw.js')
+    .then(reg => console.log('サービスワーカーが登録されました。', reg))
+    .catch(err => console.error('サービスワーカーの登録に失敗しました。', err));
+}
