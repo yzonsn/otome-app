@@ -154,9 +154,6 @@ function renderTasks() {
             
             // データをしっかり保存して画面を更新した「後」に、一呼吸置いて通知をチェックする
             saveAndRefreshAll();
-            setTimeout(() => {
-                checkDeadlines();
-            }, 100); 
         });
         listItem.appendChild(completeButton);
 
@@ -406,63 +403,46 @@ if (sortDeadlineBtn) {
 // ==========================================
 // 5. 【通知機能】安全に動作する判定ロジック
 // ==========================================
+
 function checkDeadlines() {
     const projectData = appData[currentProject];
     if (!projectData || !projectData.tasks) return;
 
     const now = new Date();
+    // 今日の日付を「YYYY-MM-DD」の文字列にする
     const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+    
+    // 比較用に、今日の日付の「時刻を 00:00:00 にした Time オブジェクト」を作る
     const today = new Date(todayStr);
 
-    let todayTasks = [];
-    let overdueTasks = [];
+    let hasDeadlineOrOverdue = false;
 
-    // 未完了の締切タスクを正しく抽出
+    // 未完了のタスクをチェック
     projectData.tasks.forEach(task => {
         if (task.deadline && task.completed === false) {
+            // タスクの締切日を比較用のオブジェクトに変換
             const taskDate = new Date(task.deadline);
             
-            if (task.deadline === todayStr) {
-                todayTasks.push(task.text);
-            } else if (taskDate < today) {
-                overdueTasks.push(task.text);
+            // 【修正】：今日が締切、または、締切日が今日よりも過去（期限切れ）の場合
+            if (task.deadline === todayStr || taskDate < today) {
+                hasDeadlineOrOverdue = true;
             }
         }
     });
 
-    // 🚨 【復活】：画面上の警告エリア（アラート）を制御する処理
-    // HTML側にある警告要素（IDが 'deadline-alert' や 'alert-area' など、既存の仕組みに合わせてください）
-    // もし既存のコードで特定の要素を操作していた場合、ここが連動します
-    const alertElement = document.getElementById('deadline-alert') || document.querySelector('.alert'); 
+    // 画面上の警告エリア（アラート）の表示制御
+    // ※柚結のHTMLにある、赤い警告ボックスのID（'alert-container' など）に合わせてください
+    const alertElement = document.getElementById('alert-container') || document.getElementById('deadline-alert') || document.querySelector('.alert'); 
     if (alertElement) {
-        if (todayTasks.length > 0 || overdueTasks.length > 0) {
-            alertElement.style.display = 'block'; // 🚨 タスクがあれば警告を表示する
+        if (hasDeadlineOrOverdue) {
+            // 🚨 今日締切、または期限切れの未完了タスクがあれば警告を出す
+            alertElement.style.display = 'block';  
         } else {
-            alertElement.style.display = 'none';  // なければ隠す
+            alertElement.style.display = 'none';   // なければ隠す
         }
     }
-
-    // パソコン側で動いていたプッシュ通知のトリガー（現状維持）
-    if (overdueTasks.length > 0) {
-        sendNotification("【⚠️ 期限切れのタスクがあります】", {
-            body: `「${overdueTasks[0]}」などが締切を過ぎています！`,
-            requireInteraction: true 
-        });
-    }
-
-    if (todayTasks.length > 0) {
-        sendNotification("【🔔 本日締切のタスク】", {
-            body: `「${todayTasks[0]}」が本日締切です。`,
-        });
-    }
 }
 
-function sendNotification(title, options) {
-    if (!("Notification" in window)) return;
-    if (Notification.permission === "granted") {
-        new Notification(title, options);
-    }
-}
 
 // ==========================================
 // 6. 起動時の安全な処理フロー
@@ -483,23 +463,4 @@ if ('Notification' in window) {
         checkDeadlines();
     }
 }
-// 一番下にそのまま貼り付けてくれ
-if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('./sw.js')
-    .then(reg => console.log('サービスワーカーが登録されました。', reg))
-    .catch(err => console.error('サービスワーカーの登録に失敗しました。', err));
-}
-// 今の通知の許可状態を、画面の一番上に無理やり文字で表示するテストコード
-const testDiv = document.createElement('div');
-testDiv.style.cssText = "background: #fff; color: #000; padding: 10px; text-align: center; font-weight: bold; border-bottom: 2px solid #ccc;";
-testDiv.textContent = "今の通知許可ステータス: " + (('Notification' in window) ? Notification.permission : "非対応");
-document.body.insertBefore(testDiv, document.body.firstChild);
 
-// script.js の一番最後の行（どの { } にも囲まれていない場所）に引っ越しさせる
-if (!document.getElementById('status-test-bar')) {
-    const testDiv = document.createElement('div');
-    testDiv.id = 'status-test-bar';
-    testDiv.style.cssText = "background: #fff; color: #000; padding: 10px; text-align: center; font-weight: bold; border-bottom: 2px solid #ccc;";
-    testDiv.textContent = "今の通知許可ステータス: " + (('Notification' in window) ? Notification.permission : "非対応");
-    document.body.insertBefore(testDiv, document.body.firstChild);
-}
