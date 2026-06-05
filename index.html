@@ -6,6 +6,187 @@
     <title>乙女ゲーム制作マネージャー</title>
     <link rel="stylesheet" href="style.css">
     <link rel="manifest" href="manifest.json">
+    
+    <style>
+    /* ==========================================
+       【お部屋】タブ専用の追加スタイリング
+       ========================================== */
+    .oniichan-container {
+        display: flex;
+        background: #fdf8f8;
+        border: 1px solid #ecc9c9;
+        border-radius: 12px;
+        padding: 12px;
+        margin-bottom: 15px;
+        margin-top: 10px;
+    }
+    .oniichan-avatar-box {
+        width: 90px;
+        height: 90px;
+        margin-right: 12px;
+        flex-shrink: 0;
+    }
+    .avatar-placeholder-normal {
+        width: 100%; height: 100%; background: #dee2e6; border-radius: 8px;
+        display: flex; align-items: center; justify-content: center;
+        font-weight: bold; border: 2px solid #adb5bd; color: #495057; font-size: 13px;
+    }
+    .avatar-placeholder-angry {
+        width: 100%; height: 100%; background: #f8d7da; border-radius: 8px;
+        display: flex; align-items: center; justify-content: center;
+        font-weight: bold; border: 2px solid #f5c6cb; color: #721c24; font-size: 13px;
+    }
+    .avatar-placeholder-love {
+        width: 100%; height: 100%; background: #fbcfe8; border-radius: 8px;
+        display: flex; align-items: center; justify-content: center;
+        font-weight: bold; border: 2px solid #f472b6; color: #be185d; font-size: 13px;
+    }
+    .oniichan-speech-bubble {
+        flex-grow: 1;
+        background: #ffffff;
+        border: 1px solid #ecc9c9;
+        border-radius: 8px;
+        padding: 10px;
+        font-size: 14px;
+        color: #3a2222;
+        line-height: 1.5;
+    }
+    .sugoroku-container {
+        background: #ffffff;
+        border: 1px solid #e2e8f0;
+        border-radius: 12px;
+        padding: 12px;
+        margin-bottom: 15px;
+    }
+    .sugoroku-header {
+        display: flex;
+        justify-content: space-between;
+        font-size: 13px;
+        font-weight: bold;
+        color: #4a5568;
+        margin-bottom: 10px;
+    }
+    .sugoroku-track {
+        position: relative;
+        background: #edf2f7;
+        height: 20px;
+        border-radius: 10px;
+        padding: 0 10px;
+    }
+    .player-icon {
+        position: absolute;
+        top: -12px;
+        left: 0;
+        font-size: 20px;
+        transition: left 0.5s ease;
+    }
+    .timer-counter-container {
+        display: flex;
+        gap: 12px;
+        margin-bottom: 15px;
+    }
+    .timer-block, .counter-block {
+        flex: 1;
+        background: #ffffff;
+        border: 1px solid #e2e8f0;
+        border-radius: 12px;
+        padding: 12px;
+        text-align: center;
+    }
+    #timer-display {
+        font-size: 32px;
+        font-weight: bold;
+        font-family: monospace;
+        color: #2d3748;
+        margin-bottom: 6px;
+    }
+    #timer-start-btn {
+        background: #6b46c1;
+        color: white;
+        border: none;
+        padding: 6px 16px;
+        border-radius: 20px;
+        font-size: 13px;
+        cursor: pointer;
+    }
+    #word-count-display {
+        font-size: 28px;
+        font-weight: bold;
+        color: #2d3748;
+        margin-top: 5px;
+    }
+    #word-count-display .unit {
+        font-size: 14px;
+        color: #718096;
+    }
+    .next-unlock-info {
+        font-size: 11px;
+        color: #e53e3e;
+        margin-top: 4px;
+        font-weight: bold;
+    }
+    .diary-toggle-btn {
+        width: 100%;
+        background: #4a5568;
+        color: white;
+        border: none;
+        padding: 12px;
+        border-radius: 8px;
+        font-weight: bold;
+        cursor: pointer;
+    }
+    .room-modal-overlay {
+        position: fixed;
+        top: 0; left: 0; width: 100%; height: 100%;
+        background: rgba(0,0,0,0.5);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 2000;
+    }
+    .room-modal-content {
+        background: white;
+        padding: 20px;
+        border-radius: 12px;
+        width: 90%;
+        max-width: 400px;
+        max-height: 80%;
+        overflow-y: auto;
+    }
+    .diary-item {
+        border-left: 4px solid #f472b6;
+        background: #fff5f5;
+        padding: 10px;
+        margin-bottom: 10px;
+        font-size: 13px;
+        line-height: 1.6;
+        color: #2d3748;
+        border-radius: 0 8px 8px 0;
+        text-align: left;
+    }
+    .diary-meta {
+        font-size: 11px;
+        color: #be185d;
+        font-weight: bold;
+        margin-bottom: 4px;
+    }
+    .diary-locked {
+        color: #a0aec0;
+        font-style: italic;
+        text-align: center;
+        padding: 10px 0;
+        font-size: 13px;
+    }
+    .room-modal-close-btn {
+        width: 100%;
+        background: #edf2f7;
+        border: none;
+        padding: 8px;
+        margin-top: 15px;
+        border-radius: 6px;
+        cursor: pointer;
+    }
+    </style>
 </head>
 <body>
 
@@ -77,6 +258,58 @@
         </div>
     </section>
 
+    <section id="section-room" class="tab-content" style="display: none;">
+        <h2>お部屋</h2>
+        
+        <div class="oniichan-container">
+            <div class="oniichan-avatar-box">
+                <div id="oniichan-avatar" class="avatar-placeholder-normal">
+                    <span id="oniichan-status-text">遙（通常）</span>
+                </div>
+            </div>
+            <div class="oniichan-speech-bubble">
+                <p id="oniichan-speech">「お兄ちゃん、ずっとここで君のことを見てるからね。さあ、安心して始めなさい、柚結」</p>
+            </div>
+        </div>
+
+        <div class="sugoroku-container">
+            <div class="sugoroku-header">
+                <span>🔲 クエスト進捗（タスク完了で前進）</span>
+                <span id="sugoroku-progress-text">0 / 5 マス</span>
+            </div>
+            <div class="sugoroku-track">
+                <div id="sugoroku-player" class="player-icon">🐾</div>
+            </div>
+        </div>
+
+        <div class="timer-counter-container">
+            <div class="timer-block">
+                <div id="timer-display">25:00</div>
+                <div class="timer-controls">
+                    <button id="timer-start-btn" onclick="toggleRoomTimer()">スタート</button>
+                </div>
+            </div>
+            
+            <div class="counter-block">
+                <div class="counter-label">この作品の執筆文字数</div>
+                <div id="word-count-display">0 <span class="unit">文字</span></div>
+                <div class="next-unlock-info" id="next-unlock-text">次の日記解禁まで あと -- 文字</div>
+            </div>
+        </div>
+
+        <div class="diary-gallery-container">
+            <button class="diary-toggle-btn" onclick="toggleRoomDiaryModal()">📖 お兄ちゃんの秘密日記を開く</button>
+        </div>
+
+        <div id="room-diary-modal" class="room-modal-overlay" style="display: none;">
+            <div class="room-modal-content">
+                <h3>🔒 遙の秘匿記録</h3>
+                <div id="room-diary-list-container"></div>
+                <button class="room-modal-close-btn" onclick="toggleRoomDiaryModal()">お部屋に戻る</button>
+            </div>
+        </div>
+    </section>
+
     <section id="section-setting" class="tab-content">
         <h2>アプリ設定</h2>
         
@@ -84,7 +317,7 @@
             <label>📁 作品タイトルの管理</label>
             <p class="setting-desc">新しいゲーム作品を追加したり、不要になった作品を削除できます。</p>
             <div style="display: flex; gap: 10px; margin-bottom: 10px;">
-                <input type="text" id="new-project-name-input" placeholder="例：恋する魔法学園">
+                <input type="text" id="new-project-name-input" placeholder="新しい物語">
                 <button id="add-project-btn" style="margin-bottom:0; width:auto; white-space:nowrap;">作品を追加</button>
             </div>
             <button id="delete-project-btn" class="delete-btn" style="background-color:#e57373; color:white;">選択中の作品を完全に削除する</button>
@@ -123,9 +356,14 @@
     <div class="tab-menu">
         <button id="tab-task" class="active">タスク</button>
         <button id="tab-scenario">シナリオ</button>
+        <button id="tab-room">お部屋</button>
         <button id="tab-setting">設定</button>
     </div>
 
+    <script src="room.js"></script>
     <script src="script.js"></script>
+    <script src="oniichan-voice.js"></script>
+    <script src="oniichan-diary.js"></script>
+
 </body>
 </html>

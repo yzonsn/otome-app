@@ -62,6 +62,32 @@ if (!currentChapter || !appData[currentProject].chapters[currentChapter]) {
 }
 
 // ==========================================
+// 🚨【お部屋タブ連動】タスク総数と完了数を通知するブリッジ関数
+// ==========================================
+function sendTaskProgressToRoom() {
+    if (typeof roomState !== 'undefined' && typeof updateRoomUI === 'function') {
+        const projectData = appData[currentProject];
+        if (projectData && projectData.tasks) {
+            const totalTasksCount = projectData.tasks.length;
+            const completedTasksCount = projectData.tasks.filter(t => t.completed).length;
+
+            roomState.tasksDone[currentProject] = completedTasksCount;
+            
+            const totalSteps = totalTasksCount === 0 ? 5 : totalTasksCount;
+            
+            const progressTextElem = document.getElementById('sugoroku-progress-text');
+            const playerElem = document.getElementById('sugoroku-player');
+
+            if (progressTextElem && playerElem) {
+                progressTextElem.innerText = `${completedTasksCount} / ${totalSteps} マス`;
+                const percent = Math.min((completedTasksCount / totalSteps) * 100, 100);
+                playerElem.style.left = `${(percent / 100) * 85}%`;
+            }
+        }
+    }
+}
+
+// ==========================================
 // 3. 画面描画（レンダリング）の関数群
 // ==========================================
 function saveAndRefreshAll() {
@@ -73,6 +99,8 @@ function saveAndRefreshAll() {
     renderChapterSelect();
     renderTasks();
     renderScenario();
+
+    sendTaskProgressToRoom();
 }
 
 function renderProjectSelect() {
@@ -87,7 +115,6 @@ function renderProjectSelect() {
     });
 }
 
-// ⚠️【ここを修正】：chapterSelectが存在しない場合のガードを追加
 function renderChapterSelect() {
     if (!chapterSelect) return;
     chapterSelect.innerHTML = "";
@@ -112,7 +139,6 @@ function renderTasks() {
     const now = new Date();
     const todayString = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
 
-    // 1. まず、画面全体の「本日締切・期限切れ」の警告チェックを走らせる
     let hasAlertTask = false;
     savedTasks.forEach(task => {
         if (!task.completed && task.deadline) {
@@ -126,22 +152,17 @@ function renderTasks() {
         alertContainer.innerHTML = `<div class="deadline-alert-box">⚠️ 警告：本日締切、または期限切れのタスクがあります！</div>`;
     }
 
-    // 2. 【ここがポイント】：タスクを種類（カテゴリ）ごとにグループ化する器を作る
     const categories = ['シナリオ', 'イラスト', 'システム', 'その他'];
     const groupedTasks = { 'シナリオ': [], 'イラスト': [], 'システム': [], 'その他': [] };
 
-    // すべてのタスクをそれぞれのカテゴリの器に仕分ける
     savedTasks.forEach((task, index) => {
         const cat = task.category || 'その他';
-        // 元の配列のインデックス（削除や完了で使う）を一緒に記憶しておく
         groupedTasks[cat].push({ data: task, originalIndex: index });
     });
 
-    // 3. カテゴリごとに画面に描画していく
     categories.forEach(cat => {
         const tasksInCat = groupedTasks[cat];
         
-        // そのカテゴリにタスクが1つでもある場合だけ、カテゴリの見出しを作る
         if (tasksInCat.length > 0) {
             const categoryHeader = document.createElement('div');
             categoryHeader.className = `task-category-group-header cat-${cat}`;
@@ -149,15 +170,14 @@ function renderTasks() {
             categoryHeader.textContent = `■ ${cat}`;
             taskList.appendChild(categoryHeader);
 
-            // そのカテゴリに属するタスクを順番に生成
             tasksInCat.forEach(item => {
                 const task = item.data;
-                const index = item.originalIndex; // 元の配列の正しい位置
+                const index = item.originalIndex; 
 
                 const listItem = document.createElement('li');
                 
                 const badgeSpan = document.createElement('span');
-                badgeSpan.className = `category-badge badge-${task.category || 'その他'}`;
+                badgeSpan.className = `category-badge badge-${task.category || 'ignore'}`;
                 badgeSpan.textContent = task.category || 'その他';
                 listItem.appendChild(badgeSpan);
 
@@ -178,10 +198,34 @@ function renderTasks() {
                 const completeButton = document.createElement('button');
                 completeButton.textContent = task.completed ? '戻す' : '完了';
                 completeButton.style.cssText = `background-color: ${task.completed ? '#b0bec5' : '#81c784'}; color: white; border: none; border-radius: 4px; padding: 6px 12px; font-size: 12px; cursor: pointer; margin-right: 5px;`;
+                
+                // 💡完了ボタンのクリック処理（順序の適正化）
                 completeButton.addEventListener('click', function(e) {
                     e.stopPropagation();
+                    
                     task.completed = !task.completed;
-                    saveAndRefreshAll();
+                    
+                    // 先にご褒美フラグを確定させておく
+                    if (task.completed) {
+                        window.isRewardActive = true;
+                    } else {
+                        window.isRewardActive = false;
+                    }
+
+                    // フラグが確定した状態で全体を保存・更新
+                    if (typeof saveAndRefreshAll === 'function') {
+                        saveAndRefreshAll();
+                    }
+
+                    // 最後に確実にご褒美描画を叩く
+                    if (task.completed) {
+                        if (typeof window.triggerOniichanReward === 'function') {
+                        window.triggerOniichanReward();
+                     } else {
+                      console.warn("お兄ちゃんのご褒美関数が見つかりません。");
+                       }
+                    }
+                    
                 });
                 listItem.appendChild(completeButton);
 
@@ -207,9 +251,10 @@ function renderTasks() {
                 const deleteBtn = document.createElement('button');
                 deleteBtn.textContent = '🗑 タスクを削除';
                 deleteBtn.className = 'delete-btn';
+                
                 deleteBtn.addEventListener('click', function() {
                     if (confirm(`「${task.text}」を削除しますか？`)) {
-                        savedTasks.splice(index, 1); // 正しいインデックスで削除
+                        savedTasks.splice(index, 1); 
                         saveAndRefreshAll();
                     }
                 });
@@ -227,7 +272,6 @@ function renderTasks() {
         }
     });
 
-    // 4. 進捗バー（パーセンテージ）の更新処理（現状維持）
     categories.forEach(cat => {
         const catTasks = savedTasks.filter(t => (t.category || 'その他') === cat);
         const total = catTasks.length;
@@ -406,7 +450,7 @@ if (addChapterBtn) {
         if (!chapName || chapName.trim() === "") return;
         if (appData[currentProject].chapters[chapName]) { alert("その章はすでに存在します"); return; }
         
-        appData[currentProject].chapters[chapName] = `${chapName}の本文をここに…`;
+        appData[currentProject].chapters[chapName] = ``;
         currentChapter = chapName;
         saveAndRefreshAll();
         alert(`「${chapName}」を作成しました。`);
@@ -433,55 +477,41 @@ if (sortDeadlineBtn) {
 // ==========================================
 // 5. 【通知機能】安全に動作する判定ロジック
 // ==========================================
-
 function checkDeadlines() {
     const projectData = appData[currentProject];
     if (!projectData || !projectData.tasks) return;
 
     const now = new Date();
-    // 今日の日付を「YYYY-MM-DD」の文字列にする
     const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
-    
-    // 比較用に、今日の日付の「時刻を 00:00:00 にした Time オブジェクト」を作る
     const today = new Date(todayStr);
 
     let hasDeadlineOrOverdue = false;
 
-    // 未完了のタスクをチェック
     projectData.tasks.forEach(task => {
         if (task.deadline && task.completed === false) {
-            // タスクの締切日を比較用のオブジェクトに変換
             const taskDate = new Date(task.deadline);
-            
-            // 【修正】：今日が締切、または、締切日が今日よりも過去（期限切れ）の場合
             if (task.deadline === todayStr || taskDate < today) {
                 hasDeadlineOrOverdue = true;
             }
         }
     });
 
-    // 画面上の警告エリア（アラート）の表示制御
-    // ※柚結のHTMLにある、赤い警告ボックスのID（'alert-container' など）に合わせてください
     const alertElement = document.getElementById('alert-container') || document.getElementById('deadline-alert') || document.querySelector('.alert'); 
     if (alertElement) {
         if (hasDeadlineOrOverdue) {
-            // 🚨 今日締切、または期限切れの未完了タスクがあれば警告を出す
             alertElement.style.display = 'block';  
         } else {
-            alertElement.style.display = 'none';   // なければ隠す
+            alertElement.style.display = 'none';   
         }
     }
 }
 
-
 // ==========================================
 // 6. 起動時の安全な処理フロー
 // ==========================================
-// 🚨【大修正】: まず最優先でデータを読み込んで画面を描画する（これで真っ白を防止）
 renderCharacterButtons();
 saveAndRefreshAll(); 
 
-// 画面がしっかり出た後、安全に通知の許可を求めるおねだりを開始
 if ('Notification' in window) {
     if (Notification.permission === 'default') {
         Notification.requestPermission().then(permission => {
@@ -498,11 +528,9 @@ if ('Notification' in window) {
 // 7. 【設定タブ用】章の編集・削除イベント（改良版）
 // ==========================================
 function renderChapterEditControls() {
-    // 🚨 毎回最新の状態で「作品削除ボタン」を取得し直す
     const targetBtn = document.getElementById('delete-project-btn') || document.querySelector('button[id*="delete"]');
     
     if (!targetBtn) {
-        // まだHTML要素が見つからない場合は、0.1秒後に再挑戦する（安全対策）
         setTimeout(renderChapterEditControls, 100);
         return;
     }
@@ -512,35 +540,26 @@ function renderChapterEditControls() {
         editArea = document.createElement('div');
         editArea.id = 'chapter-edit-actions-area';
         editArea.style.cssText = "display: flex; flex-direction: column; gap: 10px; margin-top: 15px; padding-top: 15px; border-top: 1px dashed #ccc; width: 100%;";
-        
-        // 作品削除ボタンのすぐ後ろ（下）に挿入
         targetBtn.parentNode.insertBefore(editArea, targetBtn.nextSibling);
     }
 
-    editArea.innerHTML = ""; // 毎回クリア
+    editArea.innerHTML = ""; 
 
-    // 現在選択されている章の名前を表示するラベル
     const label = document.createElement('div');
     label.style.cssText = "font-size: 13px; color: #555; font-weight: bold; margin-bottom: 2px; text-align: left;";
     label.textContent = `◆ 章の管理（選択中: ${currentChapter}）`;
     editArea.appendChild(label);
 
-    // 📋 【新機能】全文コピーボタン
     const copyBtn = document.createElement('button');
     copyBtn.textContent = `📋 『${currentChapter}』の本文をコピー`;
     copyBtn.style.cssText = "background-color: #4db6ac; color: white; border: none; border-radius: 4px; padding: 10px; font-size: 14px; cursor: pointer; font-weight: bold; text-align: center; width: 100%; margin-bottom: 5px;";
     copyBtn.addEventListener('click', function(e) {
         e.stopPropagation();
-        
-        // 現在の章のテキストを取得
         const textToCopy = appData[currentProject].chapters[currentChapter] || "";
-        
         if (textToCopy.trim() === "") {
             alert("コピーする本文がありません。");
             return;
         }
-
-        // クリップボードにコピーする魔法の処理
         navigator.clipboard.writeText(textToCopy).then(() => {
             alert(`『${currentChapter}』の本文をクリップボードにコピーしました！`);
         }).catch(err => {
@@ -549,7 +568,6 @@ function renderChapterEditControls() {
     });
     editArea.appendChild(copyBtn);
 
-    // ✏️ 章の名前を変更するボタン
     const editBtn = document.createElement('button');
     editBtn.textContent = `✏️ 『${currentChapter}』の名前を変更`;
     editBtn.style.cssText = "background-color: #ffb74d; color: white; border: none; border-radius: 4px; padding: 10px; font-size: 14px; cursor: pointer; font-weight: bold; text-align: center; width: 100%;";
@@ -579,7 +597,6 @@ function renderChapterEditControls() {
     });
     editArea.appendChild(editBtn);
 
-    // 🗑️ 章を削除するボタン
     const deleteBtn = document.createElement('button');
     deleteBtn.textContent = `🗑️ 『${currentChapter}』を削除する`;
     deleteBtn.style.cssText = "background-color: #e57373; color: white; border: none; border-radius: 4px; padding: 10px; font-size: 14px; cursor: pointer; font-weight: bold; text-align: center; width: 100%; margin-top: 2px;";
@@ -600,7 +617,6 @@ function renderChapterEditControls() {
     editArea.appendChild(deleteBtn);
 }
 
-// 🚨 既存の連動処理を上書きして、確実にボタンが更新されるようにする
 if (typeof saveAndRefreshAll === 'function') {
     const originalSaveAndRefreshAll = saveAndRefreshAll;
     saveAndRefreshAll = function() {
@@ -609,7 +625,6 @@ if (typeof saveAndRefreshAll === 'function') {
     };
 }
 
-// 🚨 タブが切り替わった（設定タブが開かれた）瞬間にも再描画を走らせる
 if (tabButtons) {
     tabButtons.forEach(button => {
         button.addEventListener('click', () => {
@@ -618,5 +633,4 @@ if (tabButtons) {
     });
 }
 
-// 初回実行
 renderChapterEditControls();
