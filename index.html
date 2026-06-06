@@ -217,6 +217,30 @@
         border-radius: 6px;
         cursor: pointer;
     }
+    /* ==========================================
+       タイマー表示と操作ボタンの微調整
+       ========================================== */
+    
+    /* 💡 砂時計アイコンと「25:00」を完全に真ん中（中央）に揃える */
+    .timer-display {
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        gap: 4px !important;              /* アイコンと数字の間の程よい隙間 */
+        width: 100% !important;
+        text-align: center !important;
+        margin-left: 0 !important;         /* ズレの原因になる余白をリセット */
+    }
+
+    /* 💡 「スタート」「リセット」などのボタン内の文字だけを小さくする */
+    .timer-controls button, 
+    .timer-btn,
+    #startTimer, 
+    #resetTimer {
+        font-size: 11px !important;       /* 👈 文字サイズを少し小さくして枠内に綺麗に収める */
+        padding: 4px 8px !important;      /* ボタン内の文字まわりのクッションを調整 */
+        letter-spacing: -0.5px !important; /* 文字同士がはみ出さないように少しだけ詰める */
+    }
     </style>
 </head>
 <body>
