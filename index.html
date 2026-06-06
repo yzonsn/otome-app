@@ -8,48 +8,79 @@
     <link rel="manifest" href="manifest.json">
     
     <style>
-    /* ==========================================
-       【お部屋】タブ専用の追加スタイリング
+  /* ==========================================
+       【お部屋】タブ専用（イラスト巨大化・隙間縮小版）
        ========================================== */
     .oniichan-container {
-        display: flex;
-        background: #fdf8f8;
-        border: 1px solid #ecc9c9;
-        border-radius: 12px;
-        padding: 12px;
-        margin-bottom: 15px;
-        margin-top: 10px;
+        display: block !important;     /* 縦並びを維持 */
+        background: #fdf8f8 !important;
+        border: 1px solid #ecc9c9 !important;
+        border-radius: 12px !important;
+        
+        /* 💡ピンク枠の内側の余白を狭くして、イラストがギリギリまで広がれるようにする */
+        padding: 10px !important;                 
+        
+        /* 💡PC画面でのピンク枠の広さを「今のいい感じの横幅」でしっかりキープ */
+        max-width: 500px !important;              
+        
+        margin: 10px auto 15px auto !important;   
+        text-align: center !important;            
     }
+
+    /* 💡ココが重要！イラストを囲む箱をピンク枠の横幅いっぱいにドカンと広げる */
     .oniichan-avatar-box {
-        width: 90px;
-        height: 90px;
-        margin-right: 12px;
-        flex-shrink: 0;
+        display: block !important;     
+        width: 100% !important;        /* 👈 ピンク枠の横幅いっぱいに広げる */
+        max-width: 480px !important;   /* イラストの最大横幅（ほぼピンク枠と同じ） */
+        height: 320px !important;      /* 👈 縦幅も大きく（好みに合わせて350pxなどに上げてもOK） */
+        
+        margin: 0 auto 12px auto !important; /* 下のセリフ枠との隙間 */
+        padding: 0 !important;
+        flex-shrink: 0 !important;
+    }
+
+    /* 💡巨大化した箱（480x320）にイラストをぴったりフィットさせる */
+    #oniichan-avatar {
+        display: flex !important;
+        width: 100% !important;        
+        height: 100% !important;       
+        border-radius: 12px !important;
+        background-size: cover !important;
+        background-position: center !important;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05) !important;
+        align-items: center !important;
+        justify-content: center !important;
     }
     .avatar-placeholder-normal {
-        width: 100%; height: 100%; background: #dee2e6; border-radius: 8px;
+        width: 100%; height: 100%; background: #dee2e6; border-radius: 16px;
         display: flex; align-items: center; justify-content: center;
-        font-weight: bold; border: 2px solid #adb5bd; color: #495057; font-size: 13px;
+        font-weight: bold; border: 2px solid #adb5bd; color: #495057; font-size: 14px;
+        box-sizing: border-box;
     }
     .avatar-placeholder-angry {
-        width: 100%; height: 100%; background: #f8d7da; border-radius: 8px;
+        width: 100%; height: 100%; background: #f8d7da; border-radius: 16px;
         display: flex; align-items: center; justify-content: center;
-        font-weight: bold; border: 2px solid #f5c6cb; color: #721c24; font-size: 13px;
+        font-weight: bold; border: 2px solid #f5c6cb; color: #721c24; font-size: 14px;
+        box-sizing: border-box;
     }
     .avatar-placeholder-love {
-        width: 100%; height: 100%; background: #fbcfe8; border-radius: 8px;
+        width: 100%; height: 100%; background: #fbcfe8; border-radius: 16px;
         display: flex; align-items: center; justify-content: center;
-        font-weight: bold; border: 2px solid #f472b6; color: #be185d; font-size: 13px;
+        font-weight: bold; border: 2px solid #f472b6; color: #be185d; font-size: 14px;
+        box-sizing: border-box;
     }
     .oniichan-speech-bubble {
-        flex-grow: 1;
+        display: block;                /* 独立したウィンドウにする */
+        width: 100%;                   /* 横幅いっぱいに広げる */
+        box-sizing: border-box;
         background: #ffffff;
         border: 1px solid #ecc9c9;
         border-radius: 8px;
-        padding: 10px;
+        padding: 12px;
         font-size: 14px;
         color: #3a2222;
-        line-height: 1.5;
+        line-height: 1.6;
+        text-align: left;              /* セリフのテキストは左詰めで読みやすく */
     }
     .sugoroku-container {
         background: #ffffff;

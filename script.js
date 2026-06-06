@@ -450,7 +450,8 @@ if (addChapterBtn) {
         if (!chapName || chapName.trim() === "") return;
         if (appData[currentProject].chapters[chapName]) { alert("その章はすでに存在します"); return; }
         
-        appData[currentProject].chapters[chapName] = ``;
+        appData[currentProject].chapters[chapName] = `
+        `;
         currentChapter = chapName;
         saveAndRefreshAll();
         alert(`「${chapName}」を作成しました。`);

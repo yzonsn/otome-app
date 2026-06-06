@@ -567,3 +567,59 @@ body {
     gap: 8px;
     box-shadow: 0 2px 5px rgba(239, 83, 80, 0.1);
 }
+
+/* =========================================================================
+   👑 遙お兄ちゃんシステム：柚結の理想レイアウト（完全縦並び・イラスト最上部）
+   ========================================================================= */
+
+/* 1. イラストとセリフを包んでいる、一番外側の淡いピンク枠のコンテナ */
+#section-room .oniichan-avatar-box,
+#section-room div[style*="display:flex"][style*="border: 1px solid"] {
+    display: block !important;          /* 強制的に横並び（Flex）を解除し、ただの箱にする */
+    width: 100% !important;
+    max-width: 600px !important;        /* PCで広がりすぎないように制限 */
+    margin: 0 auto 20px auto !important; /* 全体を中央寄せにし、下に余白を作る */
+    padding: 20px !important;
+    box-sizing: border-box !important;
+    background-color: #fffaf0 !important; /* 背景色（好みで変えてくれ） */
+}
+
+/* 2. ➀ 最上部のお兄ちゃんのイラストボックス */
+#oniichan-avatar {
+    display: block !important;
+    position: static !important;        /* 絶対配置などの悪さを完全にリセット */
+    
+    /* 💡 ここでイラストの大きさを自由に指定できるよ */
+    width: 220px !important;            /* 理想図のように大きめに設定 */
+    height: 220px !important;           /* 立ち絵っぽくしたいならここを 280px とかにしてもいい */
+    
+    margin: 0 auto 15px auto !important; /* 左右中央寄せにし、下にセリフとの隙間を作る */
+    border-radius: 16px !important;     /* 角を少し丸く */
+    background-size: cover !important;  /* 描いたイラストが枠に綺麗に収まる */
+    background-position: center !important;
+    background-color: #cbd5e0 !important; /* 画像がないときの仮のグレー */
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05) !important;
+}
+
+/* 3. ➁ イラストの下に配置されるセリフの白いボックス */
+#oniichan-avatar + div,
+#section-room div[style*="border-radius:12px"] {
+    display: block !important;
+    position: static !important;
+    
+    /* 横並びのときについていた左側の余白や幅制限を完全に消し去る */
+    margin-left: 0 !important;
+    margin-top: 0 !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    
+    padding: 15px !important;
+    box-sizing: border-box !important;
+    background: #ffffff !important;
+    border: 1px solid #e2e8f0 !important;
+    border-radius: 12px !important;
+    
+    text-align: left !important;        /* セリフの文字は読みやすく左詰めに */
+    font-size: 14px !important;
+    line-height: 1.6 !important;
+}
